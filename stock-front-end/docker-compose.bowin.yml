@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  frontend-bowin:
+    restart: always
+    container_name: frontend-bowin
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    networks:
+      - bowin-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  bowin-network:
+    external: true  # This references the already created external network

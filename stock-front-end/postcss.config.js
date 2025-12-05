@@ -1,0 +1,10 @@
+// postcss.config.js
+module.exports = {
+  plugins: [
+    require('postcss-preset-env')({
+      stage: 3,
+      features: { 'nesting-rules': true }
+    }),
+    require('css-declaration-sorter')({ order: 'concentric-css' })
+  ]
+};

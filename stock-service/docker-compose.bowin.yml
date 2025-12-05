@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  stock-service-bowin:
+    restart: always
+    container_name: stock-service-bowin
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 6200:3000
+    environment:
+      - DB_HOST=postgres-2
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=stock-service-bowin
+    depends_on:
+      - postgres-2
+    networks:
+      - bowin-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: sh -c 'yarn migration && yarn start'
+  postgres-2:
+  # run this after the first run to create the extension
+  # docker-compose exec postgres psql -U your_user -d your_database -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
+    restart: always
+    container_name: postgres
+    image: postgres:14.17
+    ports:
+      - 65432:5432
+    volumes:
+      - ~/data/postgres/bowin:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=stock-service-bowin
+      - POSTGRES_SHARED_PRELOAD_LIBRARIES=pg_stat_statements
+    networks:
+      - bowin-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  bowin-network:
+    external: true  # This references the already created external network

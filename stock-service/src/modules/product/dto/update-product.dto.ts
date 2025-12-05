@@ -1,0 +1,34 @@
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateProductDto } from './create-product.dto';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { AreaStockType } from 'src/modules/area/entities/area.entity';
+
+export class UpdateProductDto extends PartialType(CreateProductDto) {
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
+  @IsNotEmpty()
+  @IsString()
+  partName: string;
+
+  @IsNotEmpty()
+  @IsString()
+  minimumStock: string;
+
+  @IsNotEmpty()
+  @IsEnum(AreaStockType)
+  type: AreaStockType;
+
+  @IsOptional()
+  @IsString()
+  size: string;
+
+  @IsOptional()
+  @IsString()
+  spec: string;
+
+  @IsOptional()
+  @IsString()
+  note: string;
+}
