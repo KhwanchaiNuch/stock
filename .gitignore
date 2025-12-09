@@ -57,5 +57,5 @@ Icon
 
 # Thumbnails
 ._*
-stock-front-end/src/config.js
-stock-front-end/webpack/webpack.config.js
+# stock-front-end/src/config.js
+# stock-front-end/webpack/webpack.config.js
