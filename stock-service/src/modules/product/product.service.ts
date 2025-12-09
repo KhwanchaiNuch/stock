@@ -282,10 +282,13 @@ export class ProductService {
               this.transactionRepository.sum('quantity', {
                 lotNo: item.lotNo,
                 status: TransactionStatus.OUTBOUND,
+                //sstatus: In([TransactionStatus.INBOUND, TransactionStatus.HOLD2]),
+
               }),
               this.transactionRepository.sum('quantity', {
                 lotNo: item.lotNo,
-                status: TransactionStatus.INBOUND,
+                // status: TransactionStatus.INBOUND,
+                status: In([TransactionStatus.INBOUND, TransactionStatus.HOLD]),
               }),
             ]);
 
@@ -336,6 +339,150 @@ export class ProductService {
     const total = await this.productRepository.count(productOption);
     return { items, total };
   }
+
+   async getSumItemHold({
+    limit = 10,
+    offset = 0,
+    partNo = '',
+    inputPartName = undefined,
+    id = '',
+    stockType = 'ALL',
+  }) {
+    let productOption: FindManyOptions<ProductEntity>;
+    if (limit == 99) {
+      if (id === '') {
+        productOption = {
+          where: {
+            partNo: ILike(`%${partNo}%`),
+          },
+        };
+      } else {
+        productOption = {
+          where: {
+            id,
+          },
+        };
+      }
+    } else if (id === '') {
+      productOption = {
+        take: limit,
+        skip: offset,
+        where: {
+          partNo: ILike(`%${partNo}%`),
+        },
+      };
+    } else {
+      productOption = {
+        take: limit,
+        skip: offset,
+        where: {
+          id,
+        },
+      };
+    }
+    if (inputPartName) {
+      productOption.where = {
+        ...productOption.where,
+        partName: ILike(`%${inputPartName}%`),
+      };
+    }
+
+    if (stockType.length > 0 && stockType !== 'ALL') {
+      productOption.where = {
+        ...productOption.where,
+        type: this.utilService.mapStringtoAreaStockType(stockType),
+      };
+    }
+    const products = await this.findAllByOption(productOption);
+    if (isEmpty(products)) {
+      throw new HttpException('Not found product', HttpStatus.BAD_REQUEST);
+    }
+    const items = [];
+    await Promise.all(
+      products.map(async (product) => {
+        const response = { ...product, stock: 0.0, sumPrice: 0.0 };
+
+        // Fetch raw material items in parallel
+        const rmItems = await this.rawMaterialItemRepository.find({
+          relations: ['receiptNo', 'productId'],
+          where: {
+            productId: {
+              id: product.id,
+              partName: product.partName,
+              partNo: product.partNo,
+            },
+            receiptNo: {
+              status: Not(RawMaterialReceiptStatus.DRAFT),
+            },
+            lotNo: Not(IsNull()),
+          },
+        });
+
+        // Process each item in parallel
+        await Promise.all(
+          rmItems.map(async (item) => {
+            const [stockOut, stockIn] = await Promise.all([
+              this.transactionRepository.sum('quantity', {
+                lotNo: item.lotNo,
+                //status: TransactionStatus.OUTBOUND,
+                status: In([TransactionStatus.INBOUND, TransactionStatus.HOLD2]),
+
+              }),
+              this.transactionRepository.sum('quantity', {
+                lotNo: item.lotNo,
+                // status: TransactionStatus.INBOUND,
+                status: In([TransactionStatus.INBOUND, TransactionStatus.HOLD]),
+              }),
+            ]);
+
+            const temp = stockIn - stockOut;
+            response.stock += temp;
+            response.sumPrice += temp * item.price;
+
+                console.log('📦 receiptItem from getSumItem temp =', temp);
+
+          }),
+        );
+
+        items.push(response);
+      }),
+    );
+    // for (const product of products) {
+    //   const response = { ...product, stock: 0.0, sumPrice: 0.0 };
+    //   const rmItems = await this.rawMaterialItemRepository.find({
+    //     relations: ['receiptNo', 'productId'],
+    //     where: {
+    //       productId: {
+    //         id: product.id,
+    //         partName: product.partName,
+    //         partNo: product.partNo,
+    //       },
+    //       receiptNo: {
+    //         status: Not(RawMaterialReceiptStatus.DRAFT),
+    //       },
+    //       lotNo: Not(IsNull()),
+    //     },
+    //   });
+    //   for (const item of rmItems) {
+    //     const stockOut = await this.transactionRepository.sum('quantity', {
+    //       lotNo: item.lotNo,
+    //       status: TransactionStatus.OUTBOUND,
+    //     });
+    //     const stockIn = await this.transactionRepository.sum('quantity', {
+    //       lotNo: item.lotNo,
+    //       status: TransactionStatus.INBOUND,
+    //     });
+    //     const temp = stockIn - stockOut;
+    //     response.stock += temp;
+    //     response.sumPrice += temp * item.price;
+    //   }
+    //   items.push(response);
+    // }
+    // productOption.take = undefined;
+    const total = await this.productRepository.count(productOption);
+    return { items, total };
+  }
+
 
   async getSumItemExcel({
     limit = 10,

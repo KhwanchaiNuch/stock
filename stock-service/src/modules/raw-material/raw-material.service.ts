@@ -566,6 +566,7 @@ export class RawMaterialService {
         receiptNo,
         status: RawMaterialReceiptStatus.NOT_COMPLETE,
         //stockType,
+        
       },
     });
 
@@ -634,7 +635,7 @@ export class RawMaterialService {
 
     const newRMTransaction = await this.transactionRepository.create({
       receipt: receipt.id,
-      status: TransactionStatus.INBOUND,
+      status: TransactionStatus.HOLD,
       quantity,
       lotNo,
       area: dbArea,
@@ -667,10 +668,12 @@ export class RawMaterialService {
       receipt.status = RawMaterialReceiptStatus.COMPLETE;
       await this.rawMaterialRepository.save(receipt);
     }
-    const products = await this.productService.getSumItem({
+    const products = await this.productService.getSumItemHold({
       id: receiptItem.productId.id,
     });
     console.log("products --> ", products);
+    console.log("products.items[0].stock --> ", products.items[0].stock);
+
 
     const product = await this.productService.findOne(receiptItem.productId.id);
     const newHistory = await this.historyRepository.create({
@@ -683,16 +686,15 @@ export class RawMaterialService {
     });
     await this.historyRepository.save(newHistory);
 
-    const updateResult = await this.transactionRepository.update(
-      {
-        receipt: receipt.id,
-        itemId: receiptItem.id,
-        price: receiptItem.price,
-      },
-      {
-        status: TransactionStatus.HOLD,
-      },
-    );
+    // const updateResult = await this.transactionRepository.update(
+    //   {
+    //     receipt: receipt.id,
+    //     itemId: receiptItem.id,
+    //   },
+    //   {
+    //     status: TransactionStatus.HOLD,
+    //   },
+    // );
 
 
     return { success: true };
@@ -890,7 +892,7 @@ export class RawMaterialService {
       checkReceipt.status = RawMaterialReceiptStatus.COMPLETE;
       await this.rawMaterialRepository.save(checkReceipt);
     }
-    const products = await this.productService.getSumItem({
+    const products = await this.productService.getSumItemHold({
       id: receiptItem.productId.id,
     });
     const product = await this.productService.findOne(receiptItem.productId.id);
@@ -1158,7 +1160,6 @@ export class RawMaterialService {
 
     const updateResult = await this.transactionRepository.update(
       {
-
         lotNo: lotNo,
         status: TransactionStatus.HOLD2
       },
