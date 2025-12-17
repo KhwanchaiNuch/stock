@@ -2039,8 +2039,9 @@ export class RawMaterialService {
                   .getRawOne();
 
                 sumItemInTransaction = Number(raw?.sumQuantity ?? 0);
+                              console.log('sumItemInTransaction5 : ', sumItemInTransaction);
+
               }
-              console.log('sumItemInTransaction : ', sumItemInTransaction);
 
             }
             // sumItemInTransaction = item.quantity - sumItemInTransaction;
@@ -2430,18 +2431,31 @@ export class RawMaterialService {
       );
     }
     receiptItem.quantity = sumLotInTransactionIn - sumLotInTransaction;
+    // const receiptItemPickup = await this.rawMaterialItemRepository.findOne({
+    //   relations: ['productId'],
+    //   where: {
+    //     receiptNo: {
+    //       receiptNo: receiptNo,
+    //     },
+    //     // productId: {
+    //     //   partNo: partNo,
+    //     // },
+    //     status: ReceiptItem.WAITING,
+    //   },
+    // });
     const receiptItemPickup = await this.rawMaterialItemRepository.findOne({
       relations: ['productId'],
       where: {
         receiptNo: {
           receiptNo: receiptNo,
         },
-        // productId: {
-        //   partNo: partNo,
-        // },
+        productId: {
+          partNo,
+        },
         status: ReceiptItem.WAITING,
       },
     });
+  
     console.log("partNo : ", partNo);
     console.log("receiptNo : ", receiptNo);
     console.log("receiptItemPickup.id : ", receiptItemPickup);
