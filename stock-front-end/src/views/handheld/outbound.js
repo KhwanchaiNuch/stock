@@ -247,14 +247,14 @@ const QRScanOutbound = (props) => {
   }, [recNo])
 
   const { data: recList } = useGet('/api/v1/raw-material/receipt/outbound')
-  const { data: temp ,onFetchQuery } = useGet('/api/v1/raw-material/receipt',{
+  const { data: temp ,onFetchQuery } = useGet('/api/v1/raw-material/receipt2',{
     variables: {
       receiptNo: '',
     }
   })
 
   const reloadReceipt = (receiptNo) => {
-    onFetchQuery('/api/v1/raw-material/receipt', {
+    onFetchQuery('/api/v1/raw-material/receipt2', {
       variables: { receiptNo },
     })
   }
@@ -263,7 +263,7 @@ const QRScanOutbound = (props) => {
   useEffect(() => {
     if (!temp) return
 
-    console.log('📦 Outbound Response จาก /api/v1/raw-material/receipt:', temp)
+    console.log('📦 Outbound Response จาก /api/v1/raw-material/receipt2:', temp)
 
     const items = get(temp, 'result.receiptItem', [])
 
@@ -310,6 +310,9 @@ const QRScanOutbound = (props) => {
             }
           }).then(response => {
             if (get(response, 'data.statusCode', '') === 200) {
+
+              console.log('response : ',response);
+
               const inLotQTY = get(response, 'data.result.quantity','');
               const inPickupQTY = get(response, 'data.result.pickup.quantity','');
               setInLotQTY(+inLotQTY)
@@ -326,6 +329,15 @@ const QRScanOutbound = (props) => {
               } else {
                 setQty(inLotQTY)
               }
+             // setQty(inLotQTY)
+              console.log('inPickupQTY : ',inPickupQTY);
+              console.log('inLotQTY : ',inLotQTY);
+              console.log('qty : ',qty);
+
+              // if(inPickupQTY < 0){
+              //   setQty(inLotQTY);
+              // }
+
             } else {
               setLoading(false)
               openModal({
@@ -452,7 +464,7 @@ const QRScanOutbound = (props) => {
                     // เปลี่ยน Pickup No. → เคลียร์ฟอร์มก่อน แล้วค่อยดึงข้อมูลใหม่
                     clearForm()
 
-                    onFetchQuery('/api/v1/raw-material/receipt',{
+                    onFetchQuery('/api/v1/raw-material/receipt2',{
                       variables: {
                         receiptNo: value,
                       }

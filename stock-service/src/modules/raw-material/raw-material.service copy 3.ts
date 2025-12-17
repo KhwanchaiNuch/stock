@@ -606,7 +606,7 @@ export class RawMaterialService {
     const areaOption: FindOneOptions<AreaEntity> = {
       where: {
         areaNo: area,
-     //   typeOfStock: stockType,
+        typeOfStock: stockType,
       },
     };
 
@@ -809,8 +809,6 @@ export class RawMaterialService {
     ) {
       receiptItem.status = ReceiptItem.INBOUND;
       receiptItem.area = dbArea;
-      receiptItem.checkStatus = checkStatus;
-
       await this.rawMaterialItemRepository.save(receiptItem);
     }
 
@@ -1391,20 +1389,75 @@ export class RawMaterialService {
       );
     }
 
-    if (flagComp == 'T') {
 
-      const newRMTransaction = await this.transactionRepository.create({
-        receipt: checkReceipt.id,
-        status: TransactionStatus.OUTBOUND,
-        quantity: quantityOk,
+    let beforeUpdate = await this.transactionRepository.findOne({
+      where: {
         lotNo: lotNo,
-        area: dbArea,
+        receipt: checkReceipt.id,
         itemId: receiptItem.id,
-        price: quantity,
-        scanBy: user,
-        type: stockType,
-      });
-      await this.transactionRepository.save(newRMTransaction);
+        status: Not(TransactionStatus.INBOUND),
+      },
+      order: {
+        createdAt: 'ASC',
+      },
+    });
+
+    console.log("+++++++++++++++beforeUpdate++++++++++++++++");
+    console.log("beforeUpdate : ", beforeUpdate);
+    console.log("lotNo : ", lotNo);
+    console.log("checkReceipt.id : ", checkReceipt.id);
+    console.log("receiptItem.id : ", receiptItem.id);
+
+
+    if (beforeUpdate.quantity_bk == null) {
+      await this.transactionRepository.update(
+        { id: beforeUpdate.id },
+        { quantity_bk: quantity },
+      );
+    }
+
+    if (move > 0) {
+      await this.transactionRepository.update(
+        { id: beforeUpdate.id },
+        { flag_move: 'Y' },
+      );
+
+    }
+
+    console.log("beforeUpdate : ", beforeUpdate);
+
+    beforeUpdate = await this.transactionRepository.findOne({
+      where: {
+        id: beforeUpdate.id
+      },
+    });
+
+    if (flagComp == 'T') {
+      const updateResult = await this.transactionRepository.update(
+        {
+          lotNo: lotNo,
+          receipt: checkReceipt.id,
+          itemId: receiptItem.id,
+          status: TransactionStatus.HOLD2
+        },
+        {
+          status: TransactionStatus.OUTBOUND,
+        },
+      );
+      console.log('updateResult => ', updateResult);
+
+      await this.transactionRepository.update(
+        { id: beforeUpdate.id },
+        { quantity: beforeUpdate.quantity_bk },
+      );
+
+      // กันกรณีไม่มี transaction ให้ update
+      if (!updateResult.affected || updateResult.affected === 0) {
+        throw new HttpException(
+          'Transaction not found for update',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
       const sumOutboundItemQuantity = await this.transactionRepository.sum(
         'quantity',
@@ -1495,8 +1548,10 @@ export class RawMaterialService {
           operator: user,
           productId: product,
           area: dbArea,
-          amount: quantityOk,
-          stock: products.items[0].stock,
+          amount: beforeUpdate.quantity_bk,
+          stock: 0,
+          //stock: products.items[0].stock,
+          // stock: quantity - quantityOk,
         });
         await this.historyRepository.save(newHistory);
       } catch (err) {
@@ -1510,37 +1565,25 @@ export class RawMaterialService {
 
     } else {
 
-      const newRMTransaction = await this.transactionRepository.create({
-        receipt: checkReceipt.id,
-        status: TransactionStatus.OUTBOUND,
-        quantity: quantityOk,
+      const updateResult = await this.transactionRepository.update(
+        { lotNo: lotNo, receipt: checkReceipt.id, itemId: receiptItem.id, status: TransactionStatus.OUTBOUND },
+        { status: TransactionStatus.HOLD2, },
+      );
+
+      const temp1 = beforeUpdate.quantity - quantityOk;
+      console.log("temp1 : ", temp1);
+      await this.transactionRepository.update(
+        { lotNo: lotNo, receipt: checkReceipt.id, itemId: receiptItem.id, status: TransactionStatus.HOLD2 },
+        { quantity: temp1 },
+      );
+
+      const stockIn = await this.transactionRepository.sum('quantity', {
         lotNo: lotNo,
-        area: dbArea,
-        itemId: receiptItem.id,
-        price: quantity,
-        scanBy: user,
-        type: stockType,
+        status: TransactionStatus.INBOUND,
       });
-      await this.transactionRepository.save(newRMTransaction);
+      const temp = stockIn - quantityOk;
 
 
-      // const newRMTransaction2 = await this.transactionRepository.create({
-      //   receipt: checkReceipt.id,
-      //   status: TransactionStatus.HOLD2,
-      //   quantity: quantity - quantityOk,
-      //   lotNo: lotNo,
-      //   area: dbArea,
-      //   itemId: receiptItem.id,
-      //   price: quantity,
-      //   scanBy: user,
-      //   type: stockType,
-      // });
-      // await this.transactionRepository.save(newRMTransaction2);
-
-
-      const products = await this.productService.getSumItem({
-        id: receiptItem.productId.id,
-      });
       const product = await this.productService.findOne(receiptItem.productId.id);
       try {
         const newHistory = await this.historyRepository.create({
@@ -1548,8 +1591,10 @@ export class RawMaterialService {
           operator: user,
           productId: product,
           area: dbArea,
-          amount: quantityOk,
-          stock: products.items[0].stock,
+          amount: beforeUpdate.quantity_bk,
+          stock: temp,
+          //stock: products.items[0].stock,
+          // stock: quantity - quantityOk,
         });
         await this.historyRepository.save(newHistory);
       } catch (err) {
@@ -1561,7 +1606,18 @@ export class RawMaterialService {
         );
       }
 
-
+      //   const newRMTransaction = await this.transactionRepository.create({
+      //     receipt: checkReceipt.id,
+      //     status: TransactionStatus.OUTBOUND,
+      //     quantity: quantityOk,
+      //     lotNo: lotNo,
+      //     area: dbArea,
+      //     itemId: receiptItem.id,
+      //     price: 1,
+      //     scanBy: user,
+      //     type: stockType,
+      //   });
+      //   await this.transactionRepository.save(newRMTransaction);
     }
 
 
@@ -1942,153 +1998,8 @@ export class RawMaterialService {
     receiptNo: string;
   }) {
 
-    if (receiptNo === '') {
-      return {
-        success: true,
-      };
-    } else {
-      const receipt = await this.rawMaterialRepository.findOne({
-        where: {
-          receiptNo,
-        },
-      });
 
-
-      const receiptItem = await this.rawMaterialItemRepository.find({
-        relations: [
-          'productId',
-          'receivedBy',
-          'supplierId',
-          'createdBy',
-          'customer',
-        ],
-        where: {
-          receiptNo: {
-            receiptNo: receipt.receiptNo,
-          },
-          // status: Not(ReceiptItem.DRAFT),
-        },
-        order: {
-          lotNo: 'ASC',
-        },
-        take: limit,
-        skip: offset,
-      });
-
-      const output = await Promise.all(
-        receiptItem.map(async (item) => {
-          // const sumItemInTransaction = await this.transactionRepository.sum(
-          //   'quantity',
-          //   {
-          //     itemId: item.id,
-          //     status: TransactionStatus.HOLD2
-          //   },
-          // );
-          console.log("item : ", item);
-          let customerType = item.customer.customerType || 'Internal'
-          let sumItemInTransaction = 0;
-
-          if (customerType == 'Internal') {
-            const raw = await this.transactionRepository
-              .createQueryBuilder('t')
-              .select('t.quantity', 'quantity')
-              .where('t.itemId = :itemId', { itemId: item.id })
-              .andWhere('t.status = :status', { status: TransactionStatus.OUTBOUND })
-              .orderBy('t.createdAt', 'DESC')
-              .limit(1)
-              .getRawOne();
-
-            sumItemInTransaction = Number(raw?.quantity ?? 0);
-
-            console.log('sumItemInTransaction : ', sumItemInTransaction);
-          } else {
-
-            const lastRow = await this.transactionRepository
-              .createQueryBuilder('t')
-              .withDeleted()
-              .select(['t.status AS status', 't.createdAt AS createdAt'])
-              .where('t.itemId = :itemId', { itemId: item.id })
-              .orderBy('t.createdAt', 'DESC')
-              .limit(1)
-              .getRawOne();
-            console.log('lastRow : ', lastRow);
-            if (lastRow == undefined) {
-              sumItemInTransaction = 0;
-            } if (lastRow != undefined && lastRow.status == TransactionStatus.HOLD2) {
-              sumItemInTransaction = item.quantity;
-            } else if (lastRow != undefined && lastRow.status != TransactionStatus.HOLD2) {
-
-              const lastRow = await this.transactionRepository
-                .createQueryBuilder('t')
-                .withDeleted()
-                .select(['t.status AS status', 't.createdAt AS createdAt'])
-                .where('t.itemId = :itemId', { itemId: item.id })
-                .andWhere('t.status = :status', { status: TransactionStatus.OUTBOUND })
-                .orderBy('t.createdAt', 'DESC')
-                .limit(1)
-                .getRawOne();
-              console.log('lastRow : ', lastRow);
-              if (lastRow == undefined) {
-                sumItemInTransaction = 0;
-              } else {
-                const raw = await this.transactionRepository
-                  .createQueryBuilder('t')
-                  .select('COALESCE(SUM(t.quantity), 0)', 'sumQuantity')
-                  .where('t.itemId = :itemId', { itemId: item.id })
-                  .andWhere('t.status = :status', { status: lastRow.status })
-                  .getRawOne();
-
-                sumItemInTransaction = Number(raw?.sumQuantity ?? 0);
-              }
-              console.log('sumItemInTransaction : ', sumItemInTransaction);
-
-            }
-            // sumItemInTransaction = item.quantity - sumItemInTransaction;
-
-            console.log("sumItemInTransaction3 : ", sumItemInTransaction);
-
-          }
-          console.log("sumItemInTransaction : ", sumItemInTransaction);
-          const response = omit(item, [
-            'productId',
-            'supplierId',
-            'receivedBy',
-            'createdBy',
-            'customer',
-          ]);
-          return {
-            ...response,
-            partNo: item.productId.partNo,
-            partName: item.productId.partName,
-            supplier: item?.supplierId?.supplierName,
-            receivedBy: item.receivedBy.firstName,
-            createdBy: item.createdBy.firstName,
-            customer: item.customer?.customerName,
-            customerType: item.customer?.customerType,
-            transactionItemSum: sumItemInTransaction || 0,
-          };
-        }),
-      );
-      return {
-        receipt,
-        receiptItem: output,
-        total: output.length,
-      };
-    }
-  }
-
-  async findReceiptByReceiptNo3({
-    limit = 10,
-    offset = 0,
-    receiptNo = '',
-  }: {
-    limit: number;
-    offset: number;
-    receiptNo: string;
-  }) {
-
-
-    console.log("findReceiptByReceiptNo3");
+    console.log("findReceiptByReceiptNo2");
 
     if (receiptNo === '') {
       return {
@@ -2129,63 +2040,119 @@ export class RawMaterialService {
 
       const output = await Promise.all(
         receiptItem.map(async (item) => {
-          // const sumItemInTransaction = await this.transactionRepository.sum(
-          //   'quantity',
-          //   {
-          //     itemId: item.id,
-          //     status: TransactionStatus.OUTBOUND
-          //   },
-          // );
+          const sumItemInTransaction = await this.transactionRepository.sum(
+            'quantity',
+            {
+              itemId: item.id,
+              status: TransactionStatus.HOLD2
+            },
+          );
 
-          // console.log("sumItemInTransaction : ", sumItemInTransaction);
-          let sumItemInTransaction = 0;
-          const lastRow = await this.transactionRepository
-            .createQueryBuilder('t')
-            .withDeleted()
-            .select(['t.status AS status', 't.createdAt AS createdAt'])
-            .where('t.itemId = :itemId', { itemId: item.id })
-            .orderBy('t.createdAt', 'DESC')
-            .limit(1)
-            .getRawOne();
-          console.log('lastRow : ', lastRow);
+          console.log("sumItemInTransaction : ", sumItemInTransaction);
 
-          if (lastRow == undefined) {
-            sumItemInTransaction = 0;
-          } if (lastRow != undefined && lastRow.status == TransactionStatus.OUTBOUND) {
-            sumItemInTransaction = item.quantity;
-          } else if (lastRow != undefined && lastRow.status != TransactionStatus.OUTBOUND) {
+          // const productId = item.productId?.id;
+          // console.log("productId : ", productId);
 
-            const lastRow = await this.transactionRepository
-              .createQueryBuilder('t')
-              .withDeleted()
-              .select(['t.status AS status', 't.createdAt AS createdAt'])
-              .where('t.itemId = :itemId', { itemId: item.id })
-              .andWhere('t.status = :status', { status: TransactionStatus.OUTBOUND })
-              .orderBy('t.createdAt', 'DESC')
-              .limit(1)
-              .getRawOne();
-            console.log('lastRow : ', lastRow);
-
-            if (lastRow == undefined) {
-              sumItemInTransaction = 0;
-            } else {
-              const raw = await this.transactionRepository
-                .createQueryBuilder('t')
-                .select('COALESCE(SUM(t.quantity), 0)', 'sumQuantity')
-                .where('t.itemId = :itemId', { itemId: item.id })
-                .andWhere('t.status = :status', { status: lastRow.status })
-                .getRawOne();
-
-              sumItemInTransaction = Number(raw?.sumQuantity ?? 0);
-            }
+          // // กันกรณี productId null
+          // if (!productId) {
+          //   throw new HttpException('Product not found in receipt item', HttpStatus.BAD_REQUEST);
+          // }
+          // const products = await this.productService.getSumItem({ id: productId });
+          // const product = await this.productService.findOne(productId);
+          // console.log("product : ", product);
 
 
-            console.log("sumItemInTransaction2 : ", sumItemInTransaction);
 
-          }
-          //  sumItemInTransaction = item.quantity - sumItemInTransaction;
+          const response = omit(item, [
+            'productId',
+            'supplierId',
+            'receivedBy',
+            'createdBy',
+            'customer',
+          ]);
+          return {
+            ...response,
+            partNo: item.productId.partNo,
+            partName: item.productId.partName,
+            supplier: item?.supplierId?.supplierName,
+            receivedBy: item.receivedBy.firstName,
+            createdBy: item.createdBy.firstName,
+            customer: item.customer?.customerName,
+            customerType: item.customer?.customerType,
+            transactionItemSum: sumItemInTransaction || 0,
+          };
+        }),
+      );
+      return {
+        receipt,
+        receiptItem: output,
+        total: output.length,
+      };
+    }
+  }
 
-          console.log("sumItemInTransaction3 : ", sumItemInTransaction);
+  async findReceiptByReceiptNo3({
+    limit = 10,
+    offset = 0,
+    receiptNo = '',
+  }: {
+    limit: number;
+    offset: number;
+    receiptNo: string;
+  }) {
+
+
+    console.log("findReceiptByReceiptNo2");
+
+    if (receiptNo === '') {
+      return {
+        success: true,
+      };
+    } else {
+      const receipt = await this.rawMaterialRepository.findOne({
+        where: {
+          receiptNo,
+        },
+      });
+      // if (receipt.status === RawMaterialReceiptStatus.DRAFT) {
+      //   throw new HttpException(
+      //     'This receipt has not saved yet',
+      //     HttpStatus.BAD_REQUEST,
+      //   );
+      // }
+      const receiptItem = await this.rawMaterialItemRepository.find({
+        relations: [
+          'productId',
+          'receivedBy',
+          'supplierId',
+          'createdBy',
+          'customer',
+        ],
+        where: {
+          receiptNo: {
+            receiptNo: receipt.receiptNo,
+          },
+          // status: Not(ReceiptItem.DRAFT),
+        },
+        order: {
+          lotNo: 'ASC',
+        },
+        take: limit,
+        skip: offset,
+      });
+
+      const output = await Promise.all(
+        receiptItem.map(async (item) => {
+          const sumItemInTransaction = await this.transactionRepository.sum(
+            'quantity',
+            {
+              itemId: item.id,
+              status: TransactionStatus.OUTBOUND
+            },
+          );
+
+          console.log("sumItemInTransaction : ", sumItemInTransaction);
+
           // const productId = item.productId?.id;
           // console.log("productId : ", productId);
 
@@ -2436,26 +2403,19 @@ export class RawMaterialService {
         receiptNo: {
           receiptNo: receiptNo,
         },
-        // productId: {
-        //   partNo: partNo,
-        // },
+        productId: {
+          partNo: partNo,
+        },
         status: ReceiptItem.WAITING,
       },
     });
-    console.log("partNo : ", partNo);
-    console.log("receiptNo : ", receiptNo);
-    console.log("receiptItemPickup.id : ", receiptItemPickup);
 
     const sumTransactionOfThisItem = await this.transactionRepository.sum(
       'quantity',
       {
         itemId: receiptItemPickup.id,
-        status: TransactionStatus.OUTBOUND
       },
     );
-    console.log("receiptItemPickup.quantity : ", receiptItemPickup.quantity);
-
-    console.log("sumTransactionOfThisItem : ", sumTransactionOfThisItem);
     receiptItemPickup.quantity -= sumTransactionOfThisItem;
     const response = {
       ...omit(receiptItem, ['productId', 'area', 'supplierId']),
@@ -2526,7 +2486,6 @@ export class RawMaterialService {
       'quantity',
       {
         itemId: receiptItemPickup.id,
-        status: TransactionStatus.OUTBOUND
       },
     );
     receiptItemPickup.quantity -= sumTransactionOfThisItem;
@@ -2648,8 +2607,6 @@ export class RawMaterialService {
         },
         lotNo,
         stockType,
-        checkStatus: 'NG',
-
       },
     });
 

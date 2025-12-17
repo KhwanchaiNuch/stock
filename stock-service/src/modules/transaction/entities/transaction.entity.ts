@@ -54,7 +54,7 @@ export class TransactionEntity {
     name: 'item_id',
   })
   itemId: string;
-  
+
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   price: number;
@@ -91,4 +91,13 @@ export class TransactionEntity {
     nullable: true,   // ใส่ก็ได้ ไม่ใส่ก็ได้ ถ้า DB พร้อมแล้ว
   })
   checkStatus: string;
+
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0,nullable: true, })
+  quantity_bk: number;
+
+  @Column({
+    name: 'flag_move',nullable: true,
+  })
+  flag_move: string;
 }

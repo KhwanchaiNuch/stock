@@ -142,4 +142,10 @@ export class RawMaterialItemEntity {
     name: 'deleted_at',
   })
   deletedAt: Date;
+
+  @Column({
+    name: 'check_status',
+    nullable: true,   // ใส่ก็ได้ ไม่ใส่ก็ได้ ถ้า DB พร้อมแล้ว
+  })
+  checkStatus: string;
 }

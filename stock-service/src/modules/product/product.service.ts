@@ -282,13 +282,11 @@ export class ProductService {
               this.transactionRepository.sum('quantity', {
                 lotNo: item.lotNo,
                 status: TransactionStatus.OUTBOUND,
-                //sstatus: In([TransactionStatus.INBOUND, TransactionStatus.HOLD2]),
 
               }),
               this.transactionRepository.sum('quantity', {
                 lotNo: item.lotNo,
-                // status: TransactionStatus.INBOUND,
-                status: In([TransactionStatus.INBOUND, TransactionStatus.HOLD]),
+                 status: TransactionStatus.INBOUND,
               }),
             ]);
 

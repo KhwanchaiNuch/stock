@@ -1,0 +1,34 @@
+version: '3.8'
+services:
+  stock-service:
+    restart: always
+    container_name: stock-service
+    build: .
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - 6200:3000
+    environment:
+      # - DB_HOST=206.189.94.147
+      - DB_HOST=host.docker.internal
+      - DB_PORT=65432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=stock-service
+    depends_on:
+      - postgres
+    links:
+      - postgres
+    command: sh -c 'yarn migration && yarn start:debug'
+  postgres:
+    container_name: stock-serivce-db
+    image: postgres:14.2-alpine
+    ports:
+      - 65432:5432
+    volumes:
+      - ~/apps/postgres/stock-service:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=stock-service

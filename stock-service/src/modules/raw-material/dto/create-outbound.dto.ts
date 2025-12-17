@@ -36,6 +36,7 @@ export class CreateOutboundDto {
 }
 
 export class GetOutboundDto {
+  
   @IsNotEmpty()
   @IsString()
   receiptNo: string;
@@ -50,6 +51,10 @@ export class GetOutboundDto {
 }
 
 export class CreateOutboundFinalsDto {
+
+   @IsOptional()
+  @IsString()
+  receiptNo: string;
 
   @IsOptional()
   @IsString()

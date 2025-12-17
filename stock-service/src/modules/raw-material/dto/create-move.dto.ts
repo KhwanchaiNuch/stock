@@ -29,7 +29,43 @@ export class CreateMoveDto {
   @IsNotEmpty()
   @IsString()
   stockType: AreaStockType;
+
 }
+
+export class CreateMove2Dto {
+  // @IsNotEmpty()
+  // @IsString()
+  // receiptNo: string;
+
+  @IsNotEmpty()
+  @IsString()
+  partNo: string;
+
+  @IsNotEmpty()
+  @IsString()
+  lotNo: string;
+
+  // @IsNotEmpty()
+  // @IsNumber()
+  // quantity: number;
+
+  @IsNotEmpty()
+  @IsString()
+  area: string;
+
+  @IsOptional()
+  @IsString()
+  userId: string;
+  
+  @IsNotEmpty()
+  @IsString()
+  stockType: AreaStockType;
+
+  @IsOptional()
+  @IsString()
+  move: number;
+}
+
 
 // export class GetInboundDto {
   

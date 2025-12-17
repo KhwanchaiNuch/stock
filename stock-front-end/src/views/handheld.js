@@ -35,14 +35,14 @@ const HomeMBView = (props) => {
             <main className="container-home-form">
                 <div className="home-form">
                     <img src={Icon} />
-                    <div
+                    {/* <div
                         className="btn-menu-home"
                         onClick={() => {
                             props.history.push('/handheld/RM/INBOUND')
                         }}
                     >
                         RM Inbound
-                    </div>
+                    </div> */}
                     {/* <div
                         className="btn-menu-home"
                         onClick={() => {

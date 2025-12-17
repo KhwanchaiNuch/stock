@@ -17,7 +17,8 @@ export enum OperationType {
   OUTBOUND = 'Outbound',
   MOVE = 'Move',
   INVENTORY = 'Inventory',
-  
+  HOLD = 'HOLD',
+  HOLD2 = 'HOLD2'
   
 }
 

@@ -29,6 +29,10 @@ export class CreateInboundDto {
   @IsOptional()
   @IsString()
   stockType: AreaStockType;
+
+    @IsOptional()
+  @IsString()
+  checkStatus: string;
 }
 
 export class GetInboundDto {

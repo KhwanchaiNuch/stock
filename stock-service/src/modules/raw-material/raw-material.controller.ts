@@ -38,7 +38,7 @@ import { Request } from 'express';
 
 @Controller({ path: 'raw-material', version: '1' })
 export class RawMaterialController {
-  constructor(private readonly rawMaterialService: RawMaterialService) {}
+  constructor(private readonly rawMaterialService: RawMaterialService) { }
 
   // @Get('test')
   // async test() {
@@ -158,6 +158,44 @@ export class RawMaterialController {
     },
   ) {
     const result = await this.rawMaterialService.findReceiptByReceiptNo(params);
+    return {
+      statusCode: HttpStatus.OK,
+      result,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/receipt2')
+  async findOne2(
+    @Query()
+    params: {
+      limit: number;
+      offset: number;
+      receiptNo: string;
+      status: string;
+      date: string;
+    },
+  ) {
+    const result = await this.rawMaterialService.findReceiptByReceiptNo2(params);
+    return {
+      statusCode: HttpStatus.OK,
+      result,
+    };
+  }
+  
+  @UseGuards(JwtAuthGuard)
+  @Get('/receipt3')
+  async findOne3(
+    @Query()
+    params: {
+      limit: number;
+      offset: number;
+      receiptNo: string;
+      status: string;
+      date: string;
+    },
+  ) {
+    const result = await this.rawMaterialService.findReceiptByReceiptNo3(params);
     return {
       statusCode: HttpStatus.OK,
       result,
@@ -344,7 +382,7 @@ export class RawMaterialController {
       result,
     };
   }
-   @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('pre-inbound-qc')
   async getPreInboundQc(@Query() query: GetInboundV2Dto) {
     const result = await this.rawMaterialService.findScanDataInboundQc(query);
@@ -353,9 +391,9 @@ export class RawMaterialController {
       result,
     };
   }
-     @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('pre-outbound-final')
-  async getPreOutboundFinal(@Query() query: GetInboundV2Dto) {
+  async getPreOutboundFinal(@Query() query: GetOutboundDto) {
     const result = await this.rawMaterialService.findScanDataOutboundFinal(query);
     return {
       statusCode: HttpStatus.OK,
@@ -381,6 +419,17 @@ export class RawMaterialController {
       result,
     };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('pre-move-2')
+  async getPreMove2(@Query() query: GetInboundDto) {
+    const result = await this.rawMaterialService.findScanDataMove2(query);
+    return {
+      statusCode: HttpStatus.OK,
+      result,
+    };
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('pre-inventory')
   async getPreInventory(@Query() query: GetInboundDto) {
@@ -425,7 +474,7 @@ export class RawMaterialController {
     @Req() req: Request,
   ) {
     const userId = req['user']['id'];
-    const result = await this.rawMaterialService.UpdateInbound({
+    const result = await this.rawMaterialService.createInboundST2({
       ...updateInboundRawMaterialDto,
       userId,
     });
@@ -459,28 +508,62 @@ export class RawMaterialController {
     @Req() req: Request,
   ) {
     const userId = req['user']['id'];
-
-    const { move, location, partNo, lotNo, stockType } = createOutboundRawMaterialDto;
-    if (move && move > 0 && location && location.trim() !== '') {
-       const result2 = await this.rawMaterialService.createMove({
-        partNo,
-        lotNo,
-        area: location, 
-        stockType,
+    const { move, location, partNo, lotNo, stockType,quantityOk } = createOutboundRawMaterialDto;
+    if(quantityOk > 0){
+        const result = await this.rawMaterialService.createOutboundFinal({
+        ...createOutboundRawMaterialDto,
         userId,
       });
-      console.log('result2 : ',result2);
+    }
+    
+
+    if (move && move > 0 && location && location.trim() !== '') {
+      const result2 = await this.rawMaterialService.createMove2({
+        partNo,
+        lotNo,
+        area: location,
+        stockType,
+        userId,
+        move
+      });
+      console.log('result2 : ', result2);
     }
 
-    const result = await this.rawMaterialService.createOutboundFinal({
-      ...createOutboundRawMaterialDto,
+    
+    return {
+      statusCode: HttpStatus.OK,
+      success : true
+      //result,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('create-outbound-final-move')
+  async createOutboundFinalMove(
+    @Body() createOutboundRawMaterialDto: CreateOutboundFinalsDto,
+    @Req() req: Request,
+  ) {
+    const userId = req['user']['id'];
+
+    const { move, location, partNo, lotNo, stockType } = createOutboundRawMaterialDto;
+    const result = await this.rawMaterialService.createMove({
+      partNo,
+      lotNo,
+      area: location,
+      stockType,
       userId,
     });
+    console.log('result : ', result);
 
     return {
       statusCode: HttpStatus.OK,
       result,
     };
+
+
+
+
+
   }
 
   @UseGuards(JwtAuthGuard)
@@ -539,8 +622,8 @@ export class RawMaterialController {
             <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
             <div style="display: flex; flex-wrap: wrap;">
             ${dataToDisplay
-              .map(
-                (d, i) => `
+          .map(
+            (d, i) => `
             <table style="margin-left: auto; margin-right: auto;">
               <tr>
                   <td class="column"  style="padding: 10px;" id="${i}">
@@ -576,8 +659,8 @@ export class RawMaterialController {
               </tr>
             </table>        
             `,
-              )
-              .join('')}
+          )
+          .join('')}
             </div>
           </body>
         </html>

@@ -308,7 +308,7 @@ const QRScanMove = (props) => {
         const lotNo = extractData[2]
         if (partNo && lotNo) {
           const http = httpCommon()
-          http.get('/api/v1/raw-material/pre-move', {
+          http.get('/api/v1/raw-material/pre-move-2', {
             params: {
               partNo,
               lotNo,
@@ -513,6 +513,7 @@ const QRScanMove = (props) => {
                   <tbody className="center">
                     {map(get(listNg, 'result.items', []), (item) => (
                       <tr key={item.id}>
+                        <td className="center" style={{ whiteSpace: 'nowrap' }}>{item.partNo}</td>
                         <td className="center">{item.lotNo}</td>
                         <td className="center">{item.quantity}</td>
                         <td className="center">{item.type}</td>
