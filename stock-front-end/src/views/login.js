@@ -57,7 +57,7 @@ const LoginView = (props) => {
         <>
             <div className="header-mobile">
                 <h1>
-                    {'NK'}
+                    {'SIAM'}
                 </h1>
             </div>
             <main className="container-login-form">

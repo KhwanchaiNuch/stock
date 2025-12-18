@@ -13,7 +13,7 @@ const HomeMBView = (props) => {
         <AppViewWrapperPure page="content">
             <div className="header-mobile">
                 <h1>
-                    {'NK'}
+                    {'SIAM'}
                 </h1>
                 <div className="user-menu">
                     <p>{get(user, 'username', '')}</p>
