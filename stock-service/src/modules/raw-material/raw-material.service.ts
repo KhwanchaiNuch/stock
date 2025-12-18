@@ -2015,46 +2015,8 @@ export class RawMaterialService {
             if (lastRow == undefined) {
               sumItemInTransaction = 0;
             } if (lastRow != undefined && lastRow.status == TransactionStatus.HOLD2) {
-              //sumItemInTransaction = item.quantity;
-
-              const lastOutbound = await this.transactionRepository
-                .createQueryBuilder('t')
-                .withDeleted()
-                .select([
-                  't.status AS status',
-                  't.createdAt AS createdAt',
-                ])
-                .where('t.itemId = :itemId', { itemId: item.id })
-                .andWhere('t.status = :status', { status: TransactionStatus.OUTBOUND })
-                .orderBy('t.createdAt', 'DESC')
-                .limit(1)
-                .getRawOne<{ status: TransactionStatus; createdAt: string }>();
-
-              console.log('lastOutbound :', lastOutbound);
-
-              if (!lastOutbound?.createdAt) {
-                // ✅ กรณีไม่เคย OUTBOUND เลย
-                // จะให้เป็น 0 ก็ได้ หรือจะให้รวม HOLD2 ทั้งหมดก็ได้ (ผมทำแบบรวม HOLD2 ทั้งหมดให้)
-                const rawAllHold2 = await this.transactionRepository
-                  .createQueryBuilder('t')
-                  .select('COALESCE(SUM(t.quantity), 0)', 'sumQuantity')
-                  .where('t.itemId = :itemId', { itemId: item.id })
-                  .andWhere('t.status = :status', { status: TransactionStatus.HOLD2 })
-                  .getRawOne<{ sumQuantity: string }>();
-
-                sumItemInTransaction = Number(rawAllHold2?.sumQuantity || 0);
-              } else {
-                // ✅ กรณีมี OUTBOUND ล่าสุดแล้ว -> เอา createdAt > OUTBOUND ล่าสุด
-                const rawHold2AfterOutbound = await this.transactionRepository
-                  .createQueryBuilder('t')
-                  .select('COALESCE(SUM(t.quantity), 0)', 'sumQuantity')
-                  .where('t.itemId = :itemId', { itemId: item.id })
-                  .andWhere('t.status = :status', { status: TransactionStatus.HOLD2 })
-                  .andWhere('t.createdAt > :lastOutboundAt', { lastOutboundAt: lastOutbound.createdAt })
-                  .getRawOne<{ sumQuantity: string }>();
-
-                sumItemInTransaction = Number(rawHold2AfterOutbound?.sumQuantity || 0);
-              }
+              sumItemInTransaction = item.quantity;
+              
             } else if (lastRow != undefined && lastRow.status != TransactionStatus.HOLD2) {
 
               const lastRow = await this.transactionRepository
