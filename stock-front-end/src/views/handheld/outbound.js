@@ -329,7 +329,6 @@ const QRScanOutbound = (props) => {
               } else {
                 setQty(inLotQTY)
               }
-             // setQty(inLotQTY)
               console.log('inPickupQTY : ',inPickupQTY);
               console.log('inLotQTY : ',inLotQTY);
               console.log('qty : ',qty);

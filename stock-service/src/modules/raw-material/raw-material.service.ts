@@ -1831,6 +1831,63 @@ export class RawMaterialService {
     };
   }
 
+async findReceiptByTypePickupFianl() {
+  const hold2 = TransactionStatus.HOLD2;
+
+  const qb = this.rawMaterialItemRepository
+    .createQueryBuilder('i')
+    .innerJoinAndSelect('i.receiptNo', 'r')
+    .leftJoinAndSelect('i.productId', 'product')
+    .leftJoinAndSelect('i.receivedBy', 'receivedBy')
+    .leftJoinAndSelect('i.supplierId', 'supplier')
+    .leftJoinAndSelect('i.createdBy', 'createdBy')
+    .leftJoinAndSelect('i.customer', 'customer')
+    .leftJoin(
+      'transaction',
+      't',
+      `"t"."item_id" = "i"."id"::text AND "t"."status" = :hold2 AND "t"."deleted_at" IS NULL`,
+      { hold2 },
+    )
+    .where('r.type = :type', { type: RawMaterialType.OUTBOUND })
+    .andWhere('r.status = :status', {
+      status: RawMaterialReceiptStatus.NOT_COMPLETE,
+    })
+    .andWhere('(r.isHide IS NULL OR r.isHide = :isHide)', { isHide: false })
+    .addSelect('COALESCE(SUM(t.quantity), 0)', 'sumHold2')
+    .groupBy('i.id')
+    .addGroupBy('r.id')
+    .addGroupBy('product.id')
+    .addGroupBy('receivedBy.id')
+    .addGroupBy('supplier.id')
+    .addGroupBy('createdBy.id')
+    .addGroupBy('customer.id')
+    // ✅ เงื่อนไขหลัก
+    .having('i.quantity = COALESCE(SUM(t.quantity), 0)')
+    .orderBy('r.createdAt', 'DESC');
+
+  const { entities } = await qb.getRawAndEntities();
+
+  // ✅ เอาเฉพาะ receipt (ไม่สน item แล้ว)
+  const receiptMap = new Map<string, any>();
+
+  for (const item of entities) {
+    const receipt = item.receiptNo;
+    if (!receipt) continue;
+
+    const key = receipt.receiptNo ?? receipt.id;
+    if (!receiptMap.has(key)) {
+      receiptMap.set(key, receipt);
+    }
+  }
+
+  return {
+    receipt: Array.from(receiptMap.values()),
+    totalReceipt: receiptMap.size,
+  };
+}
+
+
+
   async findReceiptByTypePartNo() {
     // async findReceiptByTypePickup(stockType: AreaStockType) {
     const receipt = await this.rawMaterialRepository
@@ -2015,8 +2072,15 @@ export class RawMaterialService {
             if (lastRow == undefined) {
               sumItemInTransaction = 0;
             } if (lastRow != undefined && lastRow.status == TransactionStatus.HOLD2) {
-              sumItemInTransaction = item.quantity;
-              
+              const raw = await this.transactionRepository
+                .createQueryBuilder('t')
+                .select('COALESCE(SUM(t.quantity), 0)', 'sumQuantity')
+                .where('t.itemId = :itemId', { itemId: item.id })
+                .andWhere('t.status = :status', { status: lastRow.status })
+                .getRawOne();
+
+              sumItemInTransaction = Number(raw?.sumQuantity ?? 0);
+
             } else if (lastRow != undefined && lastRow.status != TransactionStatus.HOLD2) {
 
               const lastRow = await this.transactionRepository
@@ -2028,7 +2092,7 @@ export class RawMaterialService {
                 .orderBy('t.createdAt', 'DESC')
                 .limit(1)
                 .getRawOne();
-              console.log('lastRow : ', lastRow);
+              console.log('lastRow2 : ', lastRow);
               if (lastRow == undefined) {
                 sumItemInTransaction = 0;
               } else {
@@ -2154,7 +2218,15 @@ export class RawMaterialService {
           if (lastRow == undefined) {
             sumItemInTransaction = 0;
           } if (lastRow != undefined && lastRow.status == TransactionStatus.OUTBOUND) {
-            sumItemInTransaction = item.quantity;
+            // sumItemInTransaction = item.quantity;
+            const raw = await this.transactionRepository
+              .createQueryBuilder('t')
+              .select('COALESCE(SUM(t.quantity), 0)', 'sumQuantity')
+              .where('t.itemId = :itemId', { itemId: item.id })
+              .andWhere('t.status = :status', { status: lastRow.status })
+              .getRawOne();
+
+            sumItemInTransaction = Number(raw?.sumQuantity ?? 0);
           } else if (lastRow != undefined && lastRow.status != TransactionStatus.OUTBOUND) {
 
             const lastRow = await this.transactionRepository
@@ -2465,7 +2537,7 @@ export class RawMaterialService {
       'quantity',
       {
         itemId: receiptItemPickup.id,
-        status: TransactionStatus.OUTBOUND
+        status: TransactionStatus.HOLD2
       },
     );
     console.log("receiptItemPickup.quantity : ", receiptItemPickup.quantity);

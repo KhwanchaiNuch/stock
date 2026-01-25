@@ -222,6 +222,16 @@ export class RawMaterialController {
       result,
     };
   }
+  @UseGuards(JwtAuthGuard)
+  @Get('/receipt/outbound-final')
+  // async findPickup() {
+  async findPickupFinal() {
+    const result = await this.rawMaterialService.findReceiptByTypePickupFianl();
+    return {
+      statusCode: HttpStatus.OK,
+      result,
+    };
+  }
 
   @UseGuards(JwtAuthGuard)
   @Delete('/receipt/:id')

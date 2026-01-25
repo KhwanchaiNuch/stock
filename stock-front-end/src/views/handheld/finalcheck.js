@@ -238,7 +238,7 @@ const QRScan = (props) => {
   const refInput3 = useRef(null)
 
   // ดึง Pickup No.
-  const { data: recList } = useGet('/api/v1/raw-material/receipt/outbound')
+  const { data: recList } = useGet('/api/v1/raw-material/receipt/outbound-final')
 
   // ดึงรายการ receipt3 (เหมือนหน้า Outbound)
   const { data: temp, onFetchQuery } = useGet('/api/v1/raw-material/receipt3', {
