@@ -371,7 +371,7 @@ const [isAllDone, setIsAllDone] = useState(false)
                   type: 'ERROR_SCAN',
                   data: {
                     title: 'Inbound',
-                    error: get(response, 'data.error', ''),
+                    error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล',
                   },
                 })
               }
@@ -383,7 +383,7 @@ const [isAllDone, setIsAllDone] = useState(false)
                 type: 'ERROR_SCAN',
                 data: {
                   title: 'Inbound',
-                  error: e.toString(),
+                  error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล',
                 },
               })
             })

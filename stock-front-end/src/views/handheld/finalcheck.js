@@ -383,7 +383,7 @@ const QRScan = (props) => {
               type: 'ERROR_SCAN',
               data: {
                 title: 'QC Check',
-                error: get(response, 'data.error', ''),
+                error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล',
               },
             })
           }
@@ -394,7 +394,7 @@ const QRScan = (props) => {
             type: 'ERROR_SCAN',
             data: {
               title: 'QC Check',
-              error: get(e, 'response.data.message', e.toString()),
+              error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล',
             },
           })
         })
@@ -404,7 +404,7 @@ const QRScan = (props) => {
         type: 'ERROR_SCAN',
         data: {
           title: 'QC Check',
-          error: err.toString(),
+          error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล',
         },
       })
     }

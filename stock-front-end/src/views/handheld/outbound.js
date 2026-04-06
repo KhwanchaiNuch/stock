@@ -343,7 +343,7 @@ const QRScanOutbound = (props) => {
                 type: 'ERROR_SCAN',
                 data: {
                   title: 'Outbound',
-                  error: get(response, 'data.error', '')
+                  error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล'
                 }
               })
             }
@@ -355,7 +355,7 @@ const QRScanOutbound = (props) => {
               type: 'ERROR_SCAN',
               data: {
                 title: 'Outbound',
-                error: get(e, 'response.data.message', '')
+                error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล'
               }
             })
           })

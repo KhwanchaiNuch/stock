@@ -270,7 +270,7 @@ const QRScan = (props) => {
                                 type: 'ERROR_SCAN',
                                 data: {
                                     title: stockType+' Inbound2',
-                                    error: get(response, 'data.error', '')
+                                    error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล'
                                 }
                             })
                         }
@@ -282,7 +282,7 @@ const QRScan = (props) => {
                                 type: 'ERROR_SCAN',
                                 data: {
                                     title: stockType+' Inbound3',
-                                    error: e.toString()
+                                    error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล'
                                 }
                             })
                         })
@@ -303,7 +303,7 @@ const QRScan = (props) => {
                     type: 'ERROR_SCAN',
                     data: {
                         title: stockType+' Inbound',
-                        error: err.toString()
+                        error: 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบข้อมูล'
                     }
                 })
             }
