@@ -21,6 +21,8 @@ const EditQcStatus = ({ mode = 'single', id = '' }) => {
 
   const styles = modalStyles(528)
   const [checkStatus, setCheckStatus] = useState('')
+  const [grade, setGrade] = useState('')
+  const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
 
   const { onPost: onPostUpdate } = usePost('/api/v1/transactions/update')
@@ -50,6 +52,8 @@ const EditQcStatus = ({ mode = 'single', id = '' }) => {
         variables: {
           id,
           checkStatus,
+          grade,
+          note,
         },
         onDone: async (res) => {
           if (get(res, 'statusCode', 200) === 200) {
@@ -99,6 +103,8 @@ const EditQcStatus = ({ mode = 'single', id = '' }) => {
       onPostUpdateAll({
         variables: {
           checkStatus,
+          grade,
+          note,
         },
         onDone: async (res) => {
           const totalUpdated = get(res, 'result.updated', 0)
@@ -174,6 +180,41 @@ const EditQcStatus = ({ mode = 'single', id = '' }) => {
               <option value="NG">NG</option>
             </select>
             <label>{'Check Status(OK,NG)'}</label>
+          </div>
+          <div className="select_wrap" style={{ width: '260px' }}>
+  <select
+    required
+    value={grade}
+    onChange={(e) => setGrade(e.target.value)}
+  >
+    <option value="" disabled>
+      -- เลือก Grade --
+    </option>
+
+    <option value="A">A</option>
+    <option value="B">B</option>
+    <option value="C">C</option>
+  </select>
+
+  <label>{'Grade'}</label>
+</div>
+          <div
+            className="select_wrap focus"
+            style={{ width: '260px', marginTop: '12px' }}
+          >
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={4}
+              style={{
+                width: '100%',
+                padding: '10px',
+                borderRadius: '6px',
+                border: '1px solid #ccc',
+                resize: 'vertical',
+              }}
+            />
+            <label>{'Note'}</label>
           </div>
 
           <div className="btn-wrapper">

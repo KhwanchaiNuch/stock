@@ -93,4 +93,12 @@ export class UpdateInboundDto {
   @IsOptional()
   @IsString()
   checkStatus: string;
+
+  @IsOptional()
+  @IsString()
+  grade: string;
+
+  @IsOptional()
+  @IsString()
+  note: string;
 }

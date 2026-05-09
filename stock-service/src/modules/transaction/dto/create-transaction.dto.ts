@@ -38,4 +38,10 @@ export class CreateTransactionDto {
   @IsString()
   @IsOptional()
   checkStatus?: string;
+
+  @IsString()
+  grade: string
+
+  @IsString()
+  note: string
 }

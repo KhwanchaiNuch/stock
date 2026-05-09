@@ -148,4 +148,10 @@ export class RawMaterialItemEntity {
     nullable: true,   // ใส่ก็ได้ ไม่ใส่ก็ได้ ถ้า DB พร้อมแล้ว
   })
   checkStatus: string;
+
+    @Column({
+    name: 'grade',
+    nullable: true,   // ใส่ก็ได้ ไม่ใส่ก็ได้ ถ้า DB พร้อมแล้ว
+  })
+  grade: string;
 }

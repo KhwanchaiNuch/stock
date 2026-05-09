@@ -182,6 +182,7 @@ export class RawMaterialService {
       date,
       receiptNo,
       customer,
+      grade
     } = body;
     const dbData = await this.rawMaterialItemRepository.findOne({
       where: {
@@ -250,6 +251,7 @@ export class RawMaterialService {
           ? ReceiptItem.WAITING
           : ReceiptItem.DRAFT,
       createdBy,
+      grade
     });
     await this.rawMaterialItemRepository.save(receiptItem);
     return omit(receiptItem, ['createdBy', 'receivedBy.userToken']);
@@ -690,7 +692,7 @@ export class RawMaterialService {
   }
 
   async createInboundST2(createInboundDto: UpdateInboundDto) {
-    const { receiptNo, partNo, lotNo, quantity, userId, checkStatus } =
+    const { receiptNo, partNo, lotNo, quantity, userId, checkStatus, grade, note } =
       createInboundDto;
     const user = await this.userService.findById(userId);
     if (isEmpty(user)) {
@@ -792,6 +794,9 @@ export class RawMaterialService {
         status: TransactionStatus.INBOUND,
         scanBy: user,
         checkStatus: checkStatus,
+        grade: grade,
+        note: note,
+
       },
     );
     // กันกรณีไม่มี transaction ให้ update
@@ -1831,60 +1836,60 @@ export class RawMaterialService {
     };
   }
 
-async findReceiptByTypePickupFianl() {
-  const hold2 = TransactionStatus.HOLD2;
+  async findReceiptByTypePickupFianl() {
+    const hold2 = TransactionStatus.HOLD2;
 
-  const qb = this.rawMaterialItemRepository
-    .createQueryBuilder('i')
-    .innerJoinAndSelect('i.receiptNo', 'r')
-    .leftJoinAndSelect('i.productId', 'product')
-    .leftJoinAndSelect('i.receivedBy', 'receivedBy')
-    .leftJoinAndSelect('i.supplierId', 'supplier')
-    .leftJoinAndSelect('i.createdBy', 'createdBy')
-    .leftJoinAndSelect('i.customer', 'customer')
-    .leftJoin(
-      'transaction',
-      't',
-      `"t"."item_id" = "i"."id"::text AND "t"."status" = :hold2 AND "t"."deleted_at" IS NULL`,
-      { hold2 },
-    )
-    .where('r.type = :type', { type: RawMaterialType.OUTBOUND })
-    .andWhere('r.status = :status', {
-      status: RawMaterialReceiptStatus.NOT_COMPLETE,
-    })
-    .andWhere('(r.isHide IS NULL OR r.isHide = :isHide)', { isHide: false })
-    .addSelect('COALESCE(SUM(t.quantity), 0)', 'sumHold2')
-    .groupBy('i.id')
-    .addGroupBy('r.id')
-    .addGroupBy('product.id')
-    .addGroupBy('receivedBy.id')
-    .addGroupBy('supplier.id')
-    .addGroupBy('createdBy.id')
-    .addGroupBy('customer.id')
-    // ✅ เงื่อนไขหลัก
-    .having('i.quantity = COALESCE(SUM(t.quantity), 0)')
-    .orderBy('r.createdAt', 'DESC');
+    const qb = this.rawMaterialItemRepository
+      .createQueryBuilder('i')
+      .innerJoinAndSelect('i.receiptNo', 'r')
+      .leftJoinAndSelect('i.productId', 'product')
+      .leftJoinAndSelect('i.receivedBy', 'receivedBy')
+      .leftJoinAndSelect('i.supplierId', 'supplier')
+      .leftJoinAndSelect('i.createdBy', 'createdBy')
+      .leftJoinAndSelect('i.customer', 'customer')
+      .leftJoin(
+        'transaction',
+        't',
+        `"t"."item_id" = "i"."id"::text AND "t"."status" = :hold2 AND "t"."deleted_at" IS NULL`,
+        { hold2 },
+      )
+      .where('r.type = :type', { type: RawMaterialType.OUTBOUND })
+      .andWhere('r.status = :status', {
+        status: RawMaterialReceiptStatus.NOT_COMPLETE,
+      })
+      .andWhere('(r.isHide IS NULL OR r.isHide = :isHide)', { isHide: false })
+      .addSelect('COALESCE(SUM(t.quantity), 0)', 'sumHold2')
+      .groupBy('i.id')
+      .addGroupBy('r.id')
+      .addGroupBy('product.id')
+      .addGroupBy('receivedBy.id')
+      .addGroupBy('supplier.id')
+      .addGroupBy('createdBy.id')
+      .addGroupBy('customer.id')
+      // ✅ เงื่อนไขหลัก
+      .having('i.quantity = COALESCE(SUM(t.quantity), 0)')
+      .orderBy('r.createdAt', 'DESC');
 
-  const { entities } = await qb.getRawAndEntities();
+    const { entities } = await qb.getRawAndEntities();
 
-  // ✅ เอาเฉพาะ receipt (ไม่สน item แล้ว)
-  const receiptMap = new Map<string, any>();
+    // ✅ เอาเฉพาะ receipt (ไม่สน item แล้ว)
+    const receiptMap = new Map<string, any>();
 
-  for (const item of entities) {
-    const receipt = item.receiptNo;
-    if (!receipt) continue;
+    for (const item of entities) {
+      const receipt = item.receiptNo;
+      if (!receipt) continue;
 
-    const key = receipt.receiptNo ?? receipt.id;
-    if (!receiptMap.has(key)) {
-      receiptMap.set(key, receipt);
+      const key = receipt.receiptNo ?? receipt.id;
+      if (!receiptMap.has(key)) {
+        receiptMap.set(key, receipt);
+      }
     }
-  }
 
-  return {
-    receipt: Array.from(receiptMap.values()),
-    totalReceipt: receiptMap.size,
-  };
-}
+    return {
+      receipt: Array.from(receiptMap.values()),
+      totalReceipt: receiptMap.size,
+    };
+  }
 
 
 
@@ -3192,5 +3197,91 @@ async findReceiptByTypePickupFianl() {
       );
     }
     return { success: true };
+  }
+
+
+  async getNextLotRunningNo(lotNo: string) {
+    if (!lotNo || lotNo.trim() === '') {
+      throw new HttpException('lotNo is required', HttpStatus.BAD_REQUEST);
+    }
+
+    const prefix = lotNo.trim();
+
+    const items = await this.rawMaterialItemRepository
+      .createQueryBuilder('item')
+      .select(['item.lotNo'])
+      .where('item.lotNo LIKE :lotPattern', {
+        lotPattern: `${prefix}_%`,
+      })
+      .withDeleted()
+      .getMany();
+
+    let maxNo = 0;
+
+    for (const item of items) {
+      const currentLotNo = item.lotNo || '';
+
+      // เช่น LOT260316_10 => 10
+      const match = currentLotNo.match(new RegExp(`^${prefix}_(\\d+)$`));
+
+      if (match) {
+        const runningNo = Number(match[1]);
+        if (!isNaN(runningNo) && runningNo > maxNo) {
+          maxNo = runningNo;
+        }
+      }
+    }
+
+    return {
+      lotNo: prefix,
+      lastNo: maxNo,
+      nextNo: maxNo + 1,
+    };
+  }
+
+
+  async completeReceiptItem(receiptItemId: string, receiptNo: string) {
+    const receiptItem = await this.rawMaterialItemRepository.findOne({
+      where: {
+        id: receiptItemId,
+        status: ReceiptItem.WAITING,
+        receiptNo: {
+          receiptNo,
+        },
+      },
+    });
+
+    if (isEmpty(receiptItem)) {
+      throw new HttpException('Not found receipt item', HttpStatus.BAD_REQUEST);
+    }
+
+    receiptItem.status = ReceiptItem.OUTBOUND;
+    await this.rawMaterialItemRepository.save(receiptItem);
+
+    const countWaitingItem = await this.rawMaterialItemRepository.count({
+      where: {
+        status: ReceiptItem.WAITING,
+        receiptNo: {
+          receiptNo,
+        },
+      },
+    });
+
+    if (countWaitingItem === 0) {
+      const receipt = await this.rawMaterialRepository.findOne({
+        where: {
+          receiptNo,
+        },
+      });
+
+      if (!isEmpty(receipt)) {
+        receipt.status = RawMaterialReceiptStatus.COMPLETE;
+        await this.rawMaterialRepository.save(receipt);
+      }
+    }
+
+    return {
+      success: true,
+    };
   }
 }

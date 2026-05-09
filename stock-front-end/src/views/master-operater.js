@@ -146,6 +146,9 @@ const MasterOperatorView = (props) => {
                                                     <th>
                                                         <p>{'Operator No.'}</p>
                                                     </th>
+                                                     <th>
+                                                        <p>{'Password'}</p>
+                                                    </th>
                                                     <th>
                                                         <p>{'Name'}</p>
                                                     </th>
@@ -174,6 +177,13 @@ const MasterOperatorView = (props) => {
                                                                 }}
                                                             >
                                                                 <p>{get(item, 'username', '')}</p>
+                                                            </td>
+                                                            <td
+                                                                onClick={() => {
+                                                                    onSelect()
+                                                                }}
+                                                            >
+                                                                <p>{get(item, 'password', '')}</p>
                                                             </td>
                                                             <td
                                                                 onClick={() => {

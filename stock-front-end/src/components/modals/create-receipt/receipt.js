@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState,useEffect } from 'react'
 import Modal from 'react-modal'
 import { useStoreActions, useStoreState } from 'easy-peasy'
 import ModalContainer from '../container'
@@ -9,6 +9,7 @@ import usePost from 'hooks/usePost'
 import { get, map, find, isEmpty } from 'lodash'
 import delay from 'utils/delay'
 import AsyncSelect from 'react-select/async';
+
 
 const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
   const closeModal = useStoreActions(dispatch => dispatch.modal.closeModal)
@@ -165,7 +166,7 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
       })
       return
     }
-    if (isEmpty(qty)) {
+    if (!qty || Number(qty) <= 0) {
       showNotification({
         props: {
           type: 'error',
@@ -198,17 +199,7 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
       })
       return
     }
-    if ((Math.round(qty* 100) / 100).toFixed(2) != (Math.round(sum * 100) / 100).toFixed(2) ) {
-      showNotification({
-        props: {
-          type: 'error',
-          title: 'please check your quantity',
-          notAutoClose: false,
-          hasCloseBtn: false
-        }
-      })
-      return
-    }
+ 
     if (firstItems) {
       onSubmitReceipt()
       return
@@ -231,12 +222,7 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
     }, 1000);
   };
 
-  let sum = 0
-  if (Array.isArray(palletQty) && palletQty.length) {
-     sum = palletQty.reduce(function(a, b){
-      return a + b;
-    })
-  }
+ 
   
 
   const handlePalletQtyChange = (index, value) => {
@@ -262,6 +248,18 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
       </div>
     ))
   };
+
+
+useEffect(() => {
+  if (palletCount > 0 && qty) {
+    const newPalletQty = Array.from(
+      { length: Number(palletCount) },
+      () => Number(qty) || 0
+    );
+
+    setPalletQTY(newPalletQty);
+  }
+}, [qty, palletCount]);
 
   return (
     <Modal
@@ -347,33 +345,44 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
               type="number"
               required
               value={qty}
-              onChange={(e) => { setQTY(e.target.value) }}
+              onChange={(e) => { setQTY(Number(e.target.value)) }}
             />
-            <label>{'Total Qty*'}</label>
+            <label>{'QTY per Pallet*'}</label>
           </div>
           <div className="select_wrap">
-            <select
+            <input
+              type="number"
               required
+              min={1}
+              max={100}
               value={palletCount}
               onChange={(e) => {
-                const count = parseInt(e.target.value, 10);
+                let count = parseInt(e.target.value, 10);
+
+                if (isNaN(count) || count <= 0) {
+                  setPalletCount('');
+                  setPalletQTY([]);
+                  return;
+                }
+
+                if (count > 100) count = 100;
+
                 setPalletCount(count);
-            
-                // Initialize palletQty with an array of empty strings
-                const newPalletQty = Array.from({ length: count }, () => '');
-                setPalletQTY(newPalletQty);
+
+              
               }}
-            >
-              <option className="placeholder" default disabled value="">{''}</option>
-              <option disabled>{'-- เลือก --'}</option>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
-            <label>{'pallet count'}</label>
+            />
+            <label>pallet count</label>
           </div>
-          {renderInputBoxes()}
-          <p style={{color: (Math.round(qty * 100) / 100).toFixed(2) == (Math.round(sum * 100) / 100).toFixed(2) ? "green" : "red"}}>need to be {qty} total add {(Math.round(sum * 100) / 100).toFixed(2)}</p>
+          <div style={{
+            maxHeight: '300px',
+            overflowY: 'auto',
+            paddingRight: '8px',
+            marginBottom: '12px',
+            width: '100%',
+          }}>
+            {renderInputBoxes()}
+          </div>
           <div className="input_wrap">
             <input
               type="number"

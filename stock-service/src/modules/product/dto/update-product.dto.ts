@@ -31,4 +31,8 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
   @IsOptional()
   @IsString()
   note: string;
+
+  @IsOptional()
+  @IsString()
+  status: string;
 }

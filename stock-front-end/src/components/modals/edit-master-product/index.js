@@ -23,6 +23,7 @@ const EditMasterProduct = (product) => {
   const [note, setNote] = useState(product.input.note)
   const [spec, setSpec] = useState(product.input.spec)
   const [size, setSize] = useState(product.input.size)
+  const [status, setStatus] = useState(product.input.status || 'Active')
   const [loading, setLoading] = useState(false)
   const { onPut } = usePut('/api/v1/product')
 
@@ -57,6 +58,7 @@ const EditMasterProduct = (product) => {
       note,
       size,
       spec,
+      status,
     }
     if (loading) return
     setLoading(true)
@@ -182,6 +184,19 @@ const EditMasterProduct = (product) => {
             />
             <label>{'Note (optional)'}</label>
           </div>
+          <div className="select_wrap focus">
+          <select
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value)
+            }}
+          >
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+
+          <label>{'Status'}</label>
+        </div>
           <div className="btn-wrapper">
             <div className="btn no-bg" onClick={closeModal}>
               Cancel

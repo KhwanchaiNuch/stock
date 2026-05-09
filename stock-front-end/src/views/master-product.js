@@ -115,47 +115,55 @@ const MasterProductView = (props) => {
     const [selected, setSelected] = useState([])
 
     const { onDelete } = useDelete('/api/v1/product')
+const onDeleteFn = async () => {
+  try {
+    for (const item of selected) {
+      const productId = get(item, 'id', '')
 
-    // const onDeleteFn = async () => {
-    //     await resolveLoop(selected, async (item, index, resolve, reject) => {
-    //         try {
-    //             if (!item.id) {
-    //                 return resolve()
-    //             }
-    //             onDelete({
-    //                 variables: {
-    //                     id: get(item, 'id', '')
-    //                 },
-    //                 onDone: (res) => {
-    //                 },
-    //                 onError: (e) => {
-    //                     console.log('onError ==>', e)
-    //                     openToast({
-    //                         message: get(e, 'response.data.message', ''),
-    //                         timeout: 2500
-    //                     })
-    //                 }
-    //             })
-    //             if ((selected.length - 1) === index) {
-    //                 setSelected([])
-    //                 showNotification({
-    //                     props: {
-    //                         type: 'success',
-    //                         title: 'Delete product successfully',
-    //                         notAutoClose: false,
-    //                         hasCloseBtn: false
-    //                     }
-    //                 })
-    //                 await delay(1500)
-    //                 refetch()
-    //             }
-    //             return resolve()
-    //         } catch (err) {
-    //             return reject(err)
-    //         }
-    //     })
-    // }
+      console.log('DELETE PRODUCT ID =>', productId)
 
+      if (!productId) continue
+
+      await onDelete({
+        variables: {
+          id: productId,
+        },
+        onDone: (res) => {
+          console.log('delete success =>', res)
+        },
+        onError: (e) => {
+          console.log('onError ==>', e)
+
+          openToast({
+            message:
+              get(e, 'response.data.message', '') ||
+              get(e, 'response.data.error', '') ||
+              'Delete failed',
+            timeout: 2500,
+          })
+        },
+      })
+    }
+
+    setSelected([])
+
+    showNotification({
+      props: {
+        type: 'success',
+        title: 'Delete product successfully',
+        notAutoClose: false,
+        hasCloseBtn: false,
+      },
+    })
+
+    await delay(1500)
+
+    refetch()
+  } catch (err) {
+    console.log('delete error =>', err)
+  }
+}
+   
     return (
       <AppViewWrapperPure page="content">
         <main className="container-receipt">
@@ -272,6 +280,9 @@ const MasterProductView = (props) => {
                             <th className="center">
                               <p>{"Note"}</p>
                             </th>
+                            <th>
+                              <p>{"Status"}</p>
+                            </th>
                           </tr>
                           {map(get(data, "result.items", []), (item) => {
                             const isSelect = some(
@@ -361,6 +372,15 @@ const MasterProductView = (props) => {
                                   }}
                                 >
                                   <p>{get(item, "note", "") || "-"}</p>
+                                </td>
+
+                                <td
+                                  className="center"
+                                  onClick={() => {
+                                    onSelect();
+                                  }}
+                                >
+                                  <p>{get(item, "status", "") || "Active"}</p>
                                 </td>
                               </tr>
                             );
@@ -479,7 +499,7 @@ const MasterProductView = (props) => {
                       />
                       Edit
                     </div>
-                    {/* <div
+                     {/* <div
                                         className={`btn-menu no-bg ${isEmpty(selected) ? 'disabled' : ''}`}
                                         onClick={() => {
                                             if (!isAllow) return
@@ -487,9 +507,9 @@ const MasterProductView = (props) => {
                                             onDeleteFn()
                                         }}
                                     >
-                                        <img src={isEmpty(selected) ? IcoDeleteGray : IcoDeleteBlue} />
+                                        <img src={selected.length !== 1 ? IcoEditGray : IcoEditBlue} />
                                         Delete
-                                    </div> */}
+                                    </div>  */}
                   </div>
                 </div>
               </div>

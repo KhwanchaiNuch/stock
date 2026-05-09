@@ -155,7 +155,7 @@ export class TransactionService {
 
   //     return saved
   //   }
-  async update(id: string, checkStatus: 'OK' | 'NG', userId: string) {
+  async update(id: string, checkStatus: 'OK' | 'NG', userId: string  , grade?: string, note?: string) {
     // 1) หา transaction ตัวที่เลือกก่อน
     const trx = await this.transactionRepository.findOne({ where: { id } });
     if (!trx) {
@@ -202,6 +202,8 @@ export class TransactionService {
       stockType: row.stockType as any,
       checkStatus,
       area: '',         // ถ้าไม่ใช้ก็ปล่อยว่างได้
+      grade : grade,
+      note : note,
     };
 
     // 4) ใช้ logic เดิมทั้งหมดที่อยู่ใน RawMaterialService
@@ -223,7 +225,7 @@ export class TransactionService {
   //   return { updated: updated.affected }
   // }
 
-  async updateAllHold(checkStatus: 'OK' | 'NG') {
+  async updateAllHold(checkStatus: 'OK' | 'NG', grade?: string, note?: string) {
     // 1) ดึง transaction ทั้งหมดที่เป็น HOLD พร้อม user ที่ scan
     const holdList = await this.transactionRepository.find({
       where: { status: TransactionStatus.HOLD },
@@ -281,6 +283,8 @@ export class TransactionService {
           stockType: row.stockType as any,
           checkStatus,
           area: '',
+          grade:grade,
+          note:note
         };
 
         // 4) เรียกใช้ logic เดิม createInboundST2

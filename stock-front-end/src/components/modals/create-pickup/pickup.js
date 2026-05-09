@@ -10,7 +10,7 @@ import { get, map, find, isEmpty } from 'lodash'
 import delay from 'utils/delay'
 import AsyncSelect from 'react-select/async';
 
-const CreatePickup = ({ firstItems = false, receiptNo = '', stockType}) => {
+const CreatePickup = ({ firstItems = false, receiptNo = '', stockType }) => {
   const closeModal = useStoreActions(dispatch => dispatch.modal.closeModal)
   const { isOpen } = useStoreState(state => state.modal)
   const showNotification = useStoreActions((actions) => actions.notification.showNotification)
@@ -28,12 +28,12 @@ const CreatePickup = ({ firstItems = false, receiptNo = '', stockType}) => {
     }
   })
   const products = get(dataRMInformation, 'result.product', [])
-  const productsTemp = products.map( item => ({ value: item.partName, label: item.partNo, stockType: item.type}));
+  const productsTemp = products.map(item => ({ value: item.partName, label: item.partNo, stockType: item.type }));
   const [loading, setLoading] = useState(false)
 
   const { onPost } = usePost('/api/v1/raw-material/receipt-item')
   const { onPost: onPostRecipt } = usePost('/api/v1/raw-material/receipt/outbound')
-
+  const [grade, setGrade] = useState('')
   const onCreateReceiptItem = () => {
     const variables = {
       receiptNo,
@@ -41,6 +41,7 @@ const CreatePickup = ({ firstItems = false, receiptNo = '', stockType}) => {
       customer,
       quantity: Number(qty),
       stockType: stockTypeInput,
+      grade
     }
     if (loading) return
     setLoading(true)
@@ -53,7 +54,7 @@ const CreatePickup = ({ firstItems = false, receiptNo = '', stockType}) => {
           showNotification({
             props: {
               type: 'success',
-              title: 'Create new '+stockType+' receipt successfully',
+              title: 'Create new ' + stockType + ' receipt successfully',
               notAutoClose: false,
               hasCloseBtn: false
             }
@@ -166,6 +167,18 @@ const CreatePickup = ({ firstItems = false, receiptNo = '', stockType}) => {
       })
       return
     }
+
+    if (isEmpty(grade)) {
+      showNotification({
+        props: {
+          type: 'error',
+          title: 'please select grade',
+          notAutoClose: false,
+          hasCloseBtn: false
+        }
+      })
+      return
+    }
     if (firstItems) {
       onSubmitReceipt()
       return
@@ -204,7 +217,7 @@ const CreatePickup = ({ firstItems = false, receiptNo = '', stockType}) => {
           <h1>
             {`Add New ${stockType} Pickup`}
           </h1>
-          <div className="select_wrap" style={{paddingBottom: '15px', 'borderRadius': '12px'}}>
+          <div className="select_wrap" style={{ paddingBottom: '15px', 'borderRadius': '12px' }}>
             <p>Part No.</p>
             <AsyncSelect
               required
@@ -216,14 +229,14 @@ const CreatePickup = ({ firstItems = false, receiptNo = '', stockType}) => {
                 setStockTypeInput(e.stockType)
                 onFetchQuery('/api/v1/raw-material/information', {
                   variables: {
-                      stockType,
+                    stockType,
                   }
                 })
               }}
               cacheOptions
               loadOptions={loadOptions}
               defaultOptions={productsTemp}
-              styles={{'color':'white'}}
+              styles={{ 'color': 'white' }}
             />
           </div>
           <h3>{partName}</h3>
@@ -251,6 +264,27 @@ const CreatePickup = ({ firstItems = false, receiptNo = '', stockType}) => {
               })}
             </select>
             <label>{'Ship to'}</label>
+          </div>
+          <div className="select_wrap">
+            <select
+              required
+              value={grade}
+              onChange={(e) => {
+                setGrade(e.target.value)
+              }}
+            >
+              <option className="placeholder" default disabled value="">
+                {''}
+              </option>
+
+              <option disabled>{'-- เลือก Grade --'}</option>
+
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+            </select>
+
+            <label>{'Grade'}</label>
           </div>
           <div className="btn-wrapper">
             <div className="btn no-bg" onClick={closeModal}>

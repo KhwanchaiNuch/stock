@@ -12,7 +12,7 @@ import { withRouter } from 'react-router-dom'
 const DetailStock = ({ title, id, ...props }) => {
   const closeModal = useStoreActions(dispatch => dispatch.modal.closeModal)
   const { isOpen } = useStoreState(state => state.modal)
-  const styles = modalStyles(770)
+  const styles = modalStyles(1000)
 
   const { data } = useGet('/api/v1/product/stock/product-detail', {
     variables: {
@@ -53,6 +53,16 @@ const DetailStock = ({ title, id, ...props }) => {
                     <p>Lot No</p>
                   </td>
                   <td className="item">
+                    Note
+                  </td>
+                    <td className="item">
+                    <p>Check Status</p>
+                  </td>
+                  
+                  <td className="item">
+                    <p>Grade</p>
+                  </td>
+                  <td className="item">
                     Stock
                   </td>
                   <td className="item">
@@ -61,6 +71,7 @@ const DetailStock = ({ title, id, ...props }) => {
                   <td className="item">
                     Sum
                   </td>
+                  
                 </tr>
                 {map(get(data, 'result.areas', []), (v, i) => {
                   return (
@@ -71,6 +82,15 @@ const DetailStock = ({ title, id, ...props }) => {
                       <td className="item">
                         {get(v, 'lotNo', '')}
                       </td>
+                       <td className="item">
+                        {get(v, 'checkStatus', '')}
+                      </td>
+                      <td className="item">
+                        {get(v, 'note', '')}
+                      </td>
+                       <td className="item">
+                        {get(v, 'grade', '')}
+                      </td>
                       <td className="item">
                         {`${get(v, 'temp_stock', 0)}`}
                       </td>
@@ -80,6 +100,7 @@ const DetailStock = ({ title, id, ...props }) => {
                       <td className="item">
                         {`${formattedAmount.format(get(v, 'temp_sumPrice', 0))}`}
                       </td>
+                     
                     </tr>
                   )
                 })}

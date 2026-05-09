@@ -100,4 +100,18 @@ export class TransactionEntity {
     name: 'flag_move',nullable: true,
   })
   flag_move: string;
+
+
+@Column({
+    name: 'grade',
+    nullable: true,   // ใส่ก็ได้ ไม่ใส่ก็ได้ ถ้า DB พร้อมแล้ว
+  })
+  grade: string;
+
+  @Column({
+    name: 'note',
+    nullable: true,   // ใส่ก็ได้ ไม่ใส่ก็ได้ ถ้า DB พร้อมแล้ว
+  })
+  note: string;
+
 }

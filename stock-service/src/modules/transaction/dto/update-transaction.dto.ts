@@ -7,9 +7,23 @@ export class UpdateQcStatusDto {
 
   @IsIn(['OK', 'NG'])
   checkStatus: 'OK' | 'NG'
+
+@IsString()
+  grade: string
+
+  @IsString()
+  note: string
+
+
 }
 
 export class UpdateAllQcStatusDto {
   @IsIn(['OK', 'NG'])
   checkStatus: 'OK' | 'NG'
+
+  @IsString()
+  grade: string
+
+  @IsString()
+  note: string
 }

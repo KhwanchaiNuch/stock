@@ -75,4 +75,11 @@ export class ProductEntity {
 
   @DeleteDateColumn()
   deletedAt: Date;
+
+  @Column({
+    nullable: true,
+  })
+  status: string;
+
+
 }

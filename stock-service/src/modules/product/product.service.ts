@@ -11,7 +11,7 @@ import {
   Not,
   Repository,
 } from 'typeorm';
-import { find, flatMap, isEmpty, omit, sumBy } from 'lodash';
+import { find, flatMap, isEmpty, omit, sumBy,get  } from 'lodash';
 import { RawMaterialItemEntity } from 'src/modules/raw-material/entities/raw-material-item.entity';
 import {
   RawMaterialEntity,
@@ -25,7 +25,7 @@ import * as moment from 'moment';
 import { UtilService } from '../utils/utility.service';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AreaStockType } from '../area/entities/area.entity';
-
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 @Injectable()
 export class ProductService {
   constructor(
@@ -178,24 +178,36 @@ export class ProductService {
     }
   }
 
-  async remove(id: string): Promise<{ success: boolean }> {
-    try {
-      const product = await this.productRepository.findOne({
-        where: {
-          id,
-        },
-      });
-      if (!product) {
-        throw new HttpException('Not found product', HttpStatus.BAD_REQUEST);
-      }
-      await this.productRepository.softRemove(product);
-      return {
-        success: true,
-      };
-    } catch (e) {
-      throw new Error(e);
-    }
+ async remove(id: string) {
+  const product = await this.productRepository.findOne({
+    where: { id },
+  });
+
+  if (!product) {
+    throw new NotFoundException('Not found product');
   }
+
+  const products = await this.getSumItem({
+    limit: 1,
+    offset: 0,
+    partNo: product.partNo,
+    stockType: undefined,
+  });
+
+  const stock = Number(products?.items?.[0]?.stock || 0);
+  console.log('products.items[0].stock --> ', stock);
+
+  if (stock > 0) {
+    throw new BadRequestException('Can not delete product because stock > 0');
+  }
+
+ // await this.productRepository.softRemove(product);
+ await this.productRepository.update(id, {
+  status: 'Inactive',
+});
+
+  return { success: true };
+}
 
   async getSumItem({
     limit = 10,
@@ -683,7 +695,8 @@ export class ProductService {
       const temp_stock = (Math.round(stock * 100) / 100).toFixed(2);
       const temp_sumPrice = (Math.round(sumPrice * 100) / 100).toFixed(2);
       if (temp_stock !== '0.00') {
-        responseArea.push({ ...eachArea, temp_stock, temp_sumPrice });
+        responseArea.push({ ...eachArea, temp_stock, temp_sumPrice,  grade: get(tx, '[0].grade', '')
+          ,checkStatus: get(tx, '[0].checkStatus', ''),note: get(tx, '[0].note', '') });
       }
     }
 

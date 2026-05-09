@@ -941,4 +941,31 @@ export class RawMaterialController {
       result,
     };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/receipt-item/next-lot-no')
+  async getNextLotNo(@Query('lotNo') lotNo: string) {
+    const result = await this.rawMaterialService.getNextLotRunningNo(lotNo);
+
+    return {
+      statusCode: HttpStatus.OK,
+      result,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+@Delete('/receipt-item-complete')
+async completeReceiptItem(
+  @Body() body: { receiptItemId: string; receiptNo: string },
+) {
+  const result = await this.rawMaterialService.completeReceiptItem(
+    body.receiptItemId,
+    body.receiptNo,
+  );
+
+  return {
+    statusCode: HttpStatus.OK,
+    result,
+  };
+}
 }

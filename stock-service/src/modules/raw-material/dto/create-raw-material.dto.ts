@@ -54,6 +54,10 @@ export class CreateRawMaterialDto {
   @IsOptional()
   @IsString()
   customer: string;
+
+   @IsOptional()
+  @IsString()
+  grade: string;
 }
 
 export class CreateRMReceiptDto {

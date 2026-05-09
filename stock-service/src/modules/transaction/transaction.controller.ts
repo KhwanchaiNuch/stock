@@ -79,24 +79,24 @@ export class TransactionController {
 @Post('update')
 async update(@Body() body: UpdateQcStatusDto,
   @Req() req: Request,) {
-  const { id, checkStatus } = body
+  const { id, checkStatus, grade, note } = body
   console.log('controller id = ', id, 'checkStatus = ', checkStatus)
   const userId = req['user']['id'];
 
   return {
     statusCode: HttpStatus.OK,
-    result: await this.transactionService.update(id, checkStatus,userId),
+    result: await this.transactionService.update(id, checkStatus,userId,grade,note),
   }
 }
 
 @UseGuards(JwtAuthGuard)
 @Post('update-all')
 async updateAllHold(@Body() body: UpdateAllQcStatusDto) {
-  const { checkStatus } = body
+  const { checkStatus, grade, note } = body
 
   return {
     statusCode: HttpStatus.OK,
-    result: await this.transactionService.updateAllHold(checkStatus),
+    result: await this.transactionService.updateAllHold(checkStatus, grade, note),
   }
 }
 
