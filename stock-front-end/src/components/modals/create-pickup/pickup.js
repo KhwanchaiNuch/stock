@@ -280,8 +280,20 @@ const CreatePickup = ({ firstItems = false, receiptNo = '', stockType }) => {
               <option disabled>{'-- เลือก Grade --'}</option>
 
               <option value="A">A</option>
+              <option value="AA">AA</option>
+              <option value="AAA">AAA</option>
               <option value="B">B</option>
+              <option value="BB">BB</option>
+              <option value="BBB">BBB</option>
               <option value="C">C</option>
+              <option value="CC">CC</option>
+              <option value="CCC">CCC</option>
+              <option value="ความหนืดต่ำ">ความหนืดต่ำ</option>
+              <option value="กำมะถันต่ำ">กำมะถันต่ำ</option>
+              <option value="SN-NS">SN-NS</option>
+              <option value="SL-NS">SL-NS</option>
+              <option value="AC">AC</option>
+              <option value="RE">RE</option>
             </select>
 
             <label>{'Grade'}</label>

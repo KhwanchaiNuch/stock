@@ -94,6 +94,7 @@ export class UsersService {
       username: operatorNo,
       password: encryptPassword,
       role,
+      note:password
     };
     const newUser = await this.usersRepository.create(payload);
     await this.usersRepository.save(newUser);
@@ -117,6 +118,7 @@ export class UsersService {
       const salt = await bcrypt.genSalt(saltRound);
       const encryptPassword = await bcrypt.hash(password, salt);
       payload.password = encryptPassword;
+      payload.note = password;
     }
     await this.usersRepository.update(user.id, {
       ...omit(payload, ['id', 'operatorNo']),

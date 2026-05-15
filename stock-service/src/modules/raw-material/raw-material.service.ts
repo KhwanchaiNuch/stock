@@ -2547,6 +2547,27 @@ export class RawMaterialService {
     );
     console.log("receiptItemPickup.quantity : ", receiptItemPickup.quantity);
 
+
+    console.log("receiptItemPickup.grade : ", receiptItemPickup.grade);
+
+
+     const getTxIn = await this.transactionRepository.findOne({
+        where: {
+          lotNo: lotNo,
+          status: TransactionStatus.INBOUND,
+        },
+      });
+          console.log("getTxIn.grade : ", getTxIn.grade);
+
+      if(receiptItemPickup.grade != getTxIn.grade){
+        throw new HttpException(
+        'The grade not match the BOUND grade.',
+         HttpStatus.BAD_REQUEST,
+        );
+      }
+
+
+
     console.log("sumTransactionOfThisItem : ", sumTransactionOfThisItem);
     receiptItemPickup.quantity -= sumTransactionOfThisItem;
     const response = {

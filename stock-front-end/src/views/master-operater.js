@@ -183,7 +183,7 @@ const MasterOperatorView = (props) => {
                                                                     onSelect()
                                                                 }}
                                                             >
-                                                                <p>{get(item, 'password', '')}</p>
+                                                                <p>{get(item, 'note', '')}</p>
                                                             </td>
                                                             <td
                                                                 onClick={() => {
