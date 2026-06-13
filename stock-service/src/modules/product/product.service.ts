@@ -9,6 +9,7 @@ import {
   IsNull,
   Like,
   Not,
+  Or,
   Repository,
 } from 'typeorm';
 import { find, flatMap, isEmpty, omit, sumBy,get  } from 'lodash';
@@ -141,10 +142,15 @@ export class ProductService {
       return this.productRepository.find({
         where: {
           type: this.utilService.mapStringtoAreaStockType(type),
+          status: Or(Not('Inactive'), IsNull()),
         },
       });
     } else {
-      return this.productRepository.find();
+      return this.productRepository.find({
+        where: {
+          status: Or(Not('Inactive'), IsNull()),
+        },
+      });
     }
   }
 
