@@ -493,6 +493,7 @@ const QRScanOutbound = (props) => {
                             <td className='center'>{item.partNo}</td>
                             <td className='center'>{item.quantity-item.transactionItemSum}</td>
                             <td className='center'>{item.stockType}</td>
+                            <td className='center'>{item.grade}</td>
                           </tr>
                         )
                       })}

@@ -346,6 +346,11 @@ const ReceiptListContainer = ({ hide, key, receiptNo, status }) => {
               <th style={{ width: "130px" }}>
                 <p>{"Part Name"}</p>
               </th>
+              {get(data, "result.receipt.type") !== "INBOUND" && (
+                <th className="center" style={{ width: "100px" }}>
+                  <p>{"Grade"}</p>
+                </th>
+              )}
 
               {get(data, "result.receipt.type") === "INBOUND" ? (
                 <>
@@ -421,6 +426,11 @@ const ReceiptListContainer = ({ hide, key, receiptNo, status }) => {
                   <td>
                     <p>{get(item, "partName", "")}</p>
                   </td>
+                  {get(data, "result.receipt.type") !== "INBOUND" && (
+                    <td className="center">
+                      <p>{get(item, "grade", "")}</p>
+                    </td>
+                  )}
                   {get(data, "result.receipt.type") === "INBOUND" ? (
                     <>
                       <td className="center">
