@@ -968,4 +968,19 @@ async completeReceiptItem(
     result,
   };
 }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/receipt-complete')
+  async completeReceipt(
+    @Body() body: { receiptNo: string },
+  ) {
+    const result = await this.rawMaterialService.completeReceipt(
+      body.receiptNo,
+    );
+
+    return {
+      statusCode: HttpStatus.OK,
+      result,
+    };
+  }
 }

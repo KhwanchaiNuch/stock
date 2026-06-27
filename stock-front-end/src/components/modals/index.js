@@ -20,6 +20,7 @@ import CreateReceipt from './create-receipt/receipt'
 import CreatePickup from './create-pickup/pickup'
 import HideReceipt from './hide-receipt/hide-receipt'
 import UnhideReceipt from './unhide-receipt/unhide-receipt'
+import CompleteReceipt from './complete-receipt/complete-receipt'
 
 // ✅ เพิ่มอันนี้
 import EditQcStatus from './edit-qc-status'
@@ -45,6 +46,7 @@ const MODAL_COMPONENTS = {
   DELETE_RECEIPT_ITEM: DeleteReceiptItem,
   HIDE_RECEIPT: HideReceipt,
   UNHIDE_RECEIPT: UnhideReceipt,
+  COMPLETE_RECEIPT: CompleteReceipt,
 
   // ✅ map type ใหม่ให้ modalRoot รู้จัก
   EDIT_QC_STATUS: EditQcStatus,

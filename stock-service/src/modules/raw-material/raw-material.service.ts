@@ -3305,4 +3305,39 @@ export class RawMaterialService {
       success: true,
     };
   }
+
+  async completeReceipt(receiptNo: string) {
+    const receipt = await this.rawMaterialRepository.findOne({
+      where: { receiptNo },
+    });
+
+    if (isEmpty(receipt)) {
+      throw new HttpException('Not found receipt', HttpStatus.BAD_REQUEST);
+    }
+
+    if (receipt.status === RawMaterialReceiptStatus.COMPLETE) {
+      throw new HttpException('Receipt already completed', HttpStatus.BAD_REQUEST);
+    }
+
+    // Mark all WAITING items as OUTBOUND
+    const waitingItems = await this.rawMaterialItemRepository.find({
+      where: {
+        status: ReceiptItem.WAITING,
+        receiptNo: { receiptNo },
+      },
+    });
+
+    for (const item of waitingItems) {
+      item.status = ReceiptItem.OUTBOUND;
+      await this.rawMaterialItemRepository.save(item);
+    }
+
+    // Mark receipt as COMPLETE
+    receipt.status = RawMaterialReceiptStatus.COMPLETE;
+    await this.rawMaterialRepository.save(receipt);
+
+    return {
+      success: true,
+    };
+  }
 }

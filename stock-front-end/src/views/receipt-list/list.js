@@ -101,7 +101,6 @@ const ReceiptListContainer = ({ hide, key, receiptNo, status }) => {
   }
 
   const { onDelete: onDeleteAll } = useDelete('/api/v1/raw-material/receipt', true)
-
   const onDeleteAllFn = () => {
     onDeleteAll({
       variables: {
@@ -632,6 +631,28 @@ const ReceiptListContainer = ({ hide, key, receiptNo, status }) => {
         <div className="menu-bar-footer">
           <div className="container">
             <div className="btn-menu-wrapper">
+              <div
+                className={`btn-menu no-bg ${!isAllow ||
+                    isEmpty(receiptNo) ||
+                    status !== "NOT_COMPLETE"
+                    ? "disabled"
+                    : ""
+                  }`}
+                onClick={() => {
+                  if (
+                    !isAllow ||
+                    isEmpty(receiptNo) ||
+                    status !== "NOT_COMPLETE"
+                  )
+                    return;
+                  openModal({
+                    type: "COMPLETE_RECEIPT",
+                    data: { receiptNo },
+                  });
+                }}
+              >
+                Complete
+              </div>
               <div
                 className={`btn-menu no-bg ${!isAllow ||
                     isEmpty(receiptNo) ||
