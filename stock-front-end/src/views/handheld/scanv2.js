@@ -355,6 +355,27 @@ const [isAllDone, setIsAllDone] = useState(false)
             })
             .then((response) => {
               if (get(response, 'data.statusCode', '') === 200) {
+                // เช็คว่า row ที่ตรงกับ lotNo ใน table เหลือ 0 หรือไม่
+                const receiptItems = get(temp, 'result.receiptItem', [])
+                const matchedItem = receiptItems.find(
+                  (item) => item.lotNo === lotNoValue
+                )
+                if (matchedItem) {
+                  const remaining =
+                    parseFloat(matchedItem.quantity || 0) -
+                    Number(matchedItem.transactionItemSum || 0)
+                  if (remaining <= 0) {
+                    setLoading(false)
+                    openModal({
+                      type: 'ERROR_SCAN',
+                      data: {
+                        title: 'Inbound',
+                        error: 'Item นี้ถูก Inbound ครบแล้ว',
+                      },
+                    })
+                    return
+                  }
+                }
                 setLoading(false)
                 setRecNo(get(response, 'data.result.receiptNo.receiptNo', ''))
                 setPartNo(partNoValue)

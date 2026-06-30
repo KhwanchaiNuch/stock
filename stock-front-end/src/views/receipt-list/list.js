@@ -589,6 +589,31 @@ const ReceiptListContainer = ({ hide, key, receiptNo, status }) => {
         <div className="menu-bar-footer">
           <div className="container">
             <div className="btn-menu-wrapper">
+              <div
+                className={`btn-menu no-bg ${!isAllow ||
+                    isEmpty(receiptNo) ||
+                    status !== "NOT_COMPLETE" ||
+                    get(data, "result.receiptItem", []).filter((map) => {
+                      return map.status !== "WAITING";
+                    }).length !== 0
+                    ? "disabled"
+                    : ""
+                  }`}
+                onClick={() => {
+                  if (
+                    !isAllow ||
+                    isEmpty(receiptNo) ||
+                    status !== "NOT_COMPLETE" ||
+                    get(data, "result.receiptItem", []).filter((map) => {
+                      return map.status !== "WAITING";
+                    }).length !== 0
+                  )
+                    return;
+                  onDeleteAllFn();
+                }}
+              >
+                Delete
+              </div>
               {data &&
                 data.result &&
                 data.result.receipt &&
