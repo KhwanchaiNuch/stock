@@ -593,6 +593,7 @@ const [isAllDone, setIsAllDone] = useState(false)
                     onFetchQuery('/api/v1/raw-material/receipt', {
                       variables: {
                         receiptNo: value,
+                        limit: 999,
                       },
                     })
                   }}
