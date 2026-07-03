@@ -78,7 +78,7 @@ export class AreaService {
       skip: offset,
       take: limit,
       where: {
-        areaNo: areaNo ? Like(`%${areaNo}%`) : null,
+        areaNo: areaNo ? areaNo : null,
         areaName: areaName ? Like(`%${areaName}%`) : null,
         typeOfStock,
       },
