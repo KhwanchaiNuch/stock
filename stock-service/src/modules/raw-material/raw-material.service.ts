@@ -605,6 +605,17 @@ export class RawMaterialService {
       throw new HttpException('Not found receipt item', HttpStatus.BAD_REQUEST);
     }
 
+    const existingHold = await this.transactionRepository.findOne({
+      where: {
+        lotNo,
+        itemId: receiptItem.id,
+        status: TransactionStatus.HOLD,
+      },
+    });
+    if (!isEmpty(existingHold)) {
+      throw new HttpException('Lot นี้ถูกสแกนไปแล้ว', HttpStatus.BAD_REQUEST);
+    }
+
     const areaOption: FindOneOptions<AreaEntity> = {
       where: {
         areaNo: area,

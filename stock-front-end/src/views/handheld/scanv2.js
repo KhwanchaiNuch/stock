@@ -285,7 +285,7 @@ const [isAllDone, setIsAllDone] = useState(false)
 
   const reloadReceipt = (receiptNo) => {
     onFetchQuery('/api/v1/raw-material/receipt', {
-      variables: { receiptNo },
+      variables: { receiptNo, limit: 999 },
     })
   }
   const clearForm = () => {
@@ -344,6 +344,18 @@ const [isAllDone, setIsAllDone] = useState(false)
         const quantity = +extractData[5]
 
         if (partNoValue && lotNoValue) {
+          // เช็ค duplicate ก่อน call API
+          const receiptItemsCheck = get(temp, 'result.receiptItem', [])
+          const matchedItemCheck = receiptItemsCheck.find((item) => item.lotNo === lotNoValue)
+          if (matchedItemCheck && Number(matchedItemCheck.transactionItemSum || 0) >= parseFloat(matchedItemCheck.quantity || 0)) {
+            setLoading(false)
+            openModal({
+              type: 'ERROR_SCAN',
+              data: { title: 'Inbound', error: 'Lot นี้ถูกสแกนไปแล้ว' },
+            })
+            return
+          }
+
           const http = httpCommon()
           http
             .get('/api/v1/raw-material/pre-inbound', {
