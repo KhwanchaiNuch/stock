@@ -12,7 +12,7 @@ import delay from 'utils/delay'
  * mode: 'single' | 'all'
  * id: ใช้ตอน mode === 'single'
  */
-const EditQcStatus = ({ mode = 'single', id = '' }) => {
+const EditQcStatus = ({ mode = 'single', id = '', ids = [] }) => {
   const closeModal = useStoreActions((dispatch) => dispatch.modal.closeModal)
   const { isOpen } = useStoreState((state) => state.modal)
   const showNotification = useStoreActions(
@@ -95,6 +95,34 @@ const EditQcStatus = ({ mode = 'single', id = '' }) => {
             },
           })
         },
+      })
+    }
+
+    // 🔹 อัปเดตเฉพาะที่เลือก
+    if (mode === 'selected') {
+      const updatePromises = ids.map(
+        (itemId) =>
+          new Promise((resolve) => {
+            onPostUpdate({
+              variables: { id: itemId, checkStatus, grade, note },
+              onDone: resolve,
+              onError: resolve,
+            })
+          })
+      )
+      Promise.all(updatePromises).then(async () => {
+        setLoading(false)
+        closeModal()
+        showNotification({
+          props: {
+            type: 'success',
+            title: `อัปเดตสำเร็จ (${ids.length} รายการ)`,
+            notAutoClose: false,
+            hasCloseBtn: false,
+          },
+        })
+        await delay(1000)
+        location.reload()
       })
     }
 

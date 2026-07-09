@@ -35,8 +35,8 @@ const QcCheckView = (props) => {
 
   const [debounced, setDebounced] = useState(false)
 
-  // selected row
-  const [selected, setSelected] = useState(null)
+  // selected rows (array of ids)
+  const [selected, setSelected] = useState([])
 
   const buildFilter = () => {
     return {
@@ -187,10 +187,10 @@ const QcCheckView = (props) => {
   }
 
   const handleEdit = () => {
-    if (!selected || !selected.id) return
+    if (selected.length === 0) return
     openModal({
       type: 'EDIT_QC_STATUS',
-      data: { mode: 'single', id: selected.id },
+      data: { mode: 'selected', ids: selected },
     })
   }
 
@@ -279,6 +279,7 @@ const QcCheckView = (props) => {
                   <table>
                     <tbody>
                       <tr>
+                        <th style={{ width: '40px' }}></th>
                         <th><p>Part No.</p></th>
                         <th><p>Part Name</p></th>
                         <th className="center"><p>LOT</p></th>
@@ -288,16 +289,26 @@ const QcCheckView = (props) => {
                       </tr>
 
                       {map(get(data, 'result.items', []), (item) => {
-                        const isSelect = selected && selected.id === item.id
+                        const isSelect = selected.includes(item.id)
 
                         return (
                           <tr
                             key={item.id}
                             className={`${isSelect ? 'is-select' : ''}`}
-                            onClick={() => {
-                              setSelected(isSelect ? null : { id: item.id })
-                            }}
                           >
+                            <td className="center">
+                              <input
+                                type="checkbox"
+                                checked={isSelect}
+                                onChange={() => {
+                                  setSelected(prev =>
+                                    isSelect
+                                      ? prev.filter(x => x !== item.id)
+                                      : [...prev, item.id]
+                                  )
+                                }}
+                              />
+                            </td>
                             <td><p>{item.partNo}</p></td>
                             <td><p>{item.partName}</p></td>
                             <td className="center"><p>{item.lotNo}</p></td>
@@ -344,12 +355,12 @@ const QcCheckView = (props) => {
               <div className="container">
                 <div className="btn-menu-wrapper">
 
-                  {/* EDIT ONE */}
+                  {/* EDIT SELECTED */}
                   <div
-                    className={`btn-menu no-bg ${!selected ? 'disabled' : ''}`}
+                    className={`btn-menu no-bg ${selected.length === 0 ? 'disabled' : ''}`}
                     onClick={handleEdit}
                   >
-                    <img src={!selected ? IcoEditGray : IcoEditBlue} alt="edit" />
+                    <img src={selected.length === 0 ? IcoEditGray : IcoEditBlue} alt="edit" />
                     Edit
                   </div>
 
