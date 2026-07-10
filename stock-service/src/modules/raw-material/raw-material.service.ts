@@ -1974,7 +1974,7 @@ export class RawMaterialService {
             'quantity',
             {
               itemId: item.id,
-              status: TransactionStatus.INBOUND,
+              status: TransactionStatus.HOLD,
             },
           );
 
