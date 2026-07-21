@@ -2614,21 +2614,21 @@ export class RawMaterialService {
           partNo,
         },
         lotNo,
-        status: ReceiptItem.HOLD2,
+        status: ReceiptItem.INBOUND,
       },
     });
     if (isEmpty(receiptItem)) {
       throw new HttpException('Not found receipt item', HttpStatus.BAD_REQUEST);
     }
 
-    if (receiptItem.status !== ReceiptItem.HOLD2) {
+    if (receiptItem.status !== ReceiptItem.INBOUND) {
       throw new HttpException('Status is not match', HttpStatus.BAD_REQUEST);
     }
 
     const sumLotInTransactionIn = await this.transactionRepository.sum(
       'quantity',
       {
-        status: TransactionStatus.HOLD2,
+        status: TransactionStatus.INBOUND,
         lotNo: lotNo,
       },
     );
