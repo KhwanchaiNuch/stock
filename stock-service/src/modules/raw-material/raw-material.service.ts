@@ -956,7 +956,14 @@ export class RawMaterialService {
         lotNo: lotNo,
       },
     );
-    if (sumLotInTransactionIn - sumLotInTransaction - quantity < 0) {
+    const sumLotInTransactionHold2 = await this.transactionRepository.sum(
+      'quantity',
+      {
+        status: TransactionStatus.HOLD2,
+        lotNo: lotNo,
+      },
+    );
+    if (sumLotInTransactionIn - sumLotInTransaction - (sumLotInTransactionHold2 ?? 0) - quantity < 0) {
       throw new HttpException(
         'Item in lot not enough (happen only scan lot in the same time.)',
         HttpStatus.BAD_REQUEST,
@@ -971,6 +978,18 @@ export class RawMaterialService {
     if (customerType == 'External') {
       _transactionStatus = TransactionStatus.HOLD2;
       _operationType = OperationType.HOLD2;
+
+      // Backend guard: block if HOLD2 already covers full item quantity
+      const existingHold2 = await this.transactionRepository.sum('quantity', {
+        itemId: receiptItem.id,
+        status: TransactionStatus.HOLD2,
+      });
+      if ((existingHold2 ?? 0) >= receiptItem.quantity) {
+        throw new HttpException(
+          'Item นี้ถูก Outbound (HOLD2) ครบแล้ว',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
 
     const newRMTransaction = await this.transactionRepository.create({
@@ -1056,15 +1075,15 @@ export class RawMaterialService {
         await this.rawMaterialRepository.save(checkReceipt);
       }
     } else {
-      const sumOutboundItemQuantity = await this.transactionRepository.sum(
+      const sumHold2ItemQuantity = await this.transactionRepository.sum(
         'quantity',
         {
           itemId: receiptItem.id,
-          status: TransactionStatus.OUTBOUND,
+          status: TransactionStatus.HOLD2,
         },
       );
       if (
-        (Math.round(sumOutboundItemQuantity * 100) / 100).toFixed(2) ==
+        (Math.round(sumHold2ItemQuantity * 100) / 100).toFixed(2) ==
         (Math.round(receiptItem.quantity * 100) / 100).toFixed(2)
       ) {
         receiptItem.status = ReceiptItem.HOLD2;
@@ -1351,12 +1370,12 @@ export class RawMaterialService {
         productId: {
           partNo,
         },
-        status: ReceiptItem.WAITING,
+        status: ReceiptItem.HOLD2,
       },
     });
     if (isEmpty(receiptItem)) {
       throw new HttpException(
-        'Receipt item is not waiting',
+        'Receipt item is not HOLD2',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -1482,15 +1501,16 @@ export class RawMaterialService {
         }),
       );
 
-      const countInboundItem = await this.rawMaterialItemRepository.count({
+      // finalcheck items มี status = HOLD2 → เช็ค HOLD2 ที่ยังไม่ถูก OUTBOUND
+      const countHold2Item = await this.rawMaterialItemRepository.count({
         where: {
-          status: ReceiptItem.WAITING,
+          status: ReceiptItem.HOLD2,
           receiptNo: {
             receiptNo,
           },
         },
       });
-      if (countInboundItem === 0) {
+      if (countHold2Item === 0) {
         checkReceipt.status = RawMaterialReceiptStatus.COMPLETE;
         await this.rawMaterialRepository.save(checkReceipt);
       }
@@ -2526,13 +2546,20 @@ export class RawMaterialService {
         lotNo: lotNo,
       },
     );
-    if (sumLotInTransactionIn - sumLotInTransaction < 0) {
+    const sumLotInTransactionHold2 = await this.transactionRepository.sum(
+      'quantity',
+      {
+        status: TransactionStatus.HOLD2,
+        lotNo: lotNo,
+      },
+    );
+    if (sumLotInTransactionIn - sumLotInTransaction - (sumLotInTransactionHold2 ?? 0) < 0) {
       throw new HttpException(
         'Out of stock for this lotNo',
         HttpStatus.BAD_REQUEST,
       );
     }
-    receiptItem.quantity = sumLotInTransactionIn - sumLotInTransaction;
+    receiptItem.quantity = sumLotInTransactionIn - sumLotInTransaction - (sumLotInTransactionHold2 ?? 0);
     // const receiptItemPickup = await this.rawMaterialItemRepository.findOne({
     //   relations: ['productId'],
     //   where: {
@@ -2562,38 +2589,36 @@ export class RawMaterialService {
     console.log("receiptNo : ", receiptNo);
     console.log("receiptItemPickup.id : ", receiptItemPickup);
 
-    const sumTransactionOfThisItem = await this.transactionRepository.sum(
+    const sumOutboundOfThisItem = await this.transactionRepository.sum(
       'quantity',
-      {
-        itemId: receiptItemPickup.id,
-        status: TransactionStatus.HOLD2
-      },
-    );
+      { itemId: receiptItemPickup.id, status: TransactionStatus.OUTBOUND },
+    ) ?? 0;
+    const sumHold2OfThisItem = await this.transactionRepository.sum(
+      'quantity',
+      { itemId: receiptItemPickup.id, status: TransactionStatus.HOLD2 },
+    ) ?? 0;
+    const sumTransactionOfThisItem = sumOutboundOfThisItem + sumHold2OfThisItem;
+
     console.log("receiptItemPickup.quantity : ", receiptItemPickup.quantity);
-
-
     console.log("receiptItemPickup.grade : ", receiptItemPickup.grade);
 
+    const getTxIn = await this.transactionRepository.findOne({
+      where: {
+        lotNo: lotNo,
+        status: TransactionStatus.INBOUND,
+      },
+    });
+    console.log("getTxIn.grade : ", getTxIn.grade);
 
-     const getTxIn = await this.transactionRepository.findOne({
-        where: {
-          lotNo: lotNo,
-          status: TransactionStatus.INBOUND,
-        },
-      });
-          console.log("getTxIn.grade : ", getTxIn.grade);
-
-      if(receiptItemPickup.grade != getTxIn.grade){
-        throw new HttpException(
+    if (receiptItemPickup.grade != getTxIn.grade) {
+      throw new HttpException(
         'The grade not match the BOUND grade.',
-         HttpStatus.BAD_REQUEST,
-        );
-      }
-
-
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     console.log("sumTransactionOfThisItem : ", sumTransactionOfThisItem);
-    receiptItemPickup.quantity -= sumTransactionOfThisItem;
+    receiptItemPickup.quantity = Math.max(0, receiptItemPickup.quantity - sumTransactionOfThisItem);
     const response = {
       ...omit(receiptItem, ['productId', 'area', 'supplierId']),
       partNo: receiptItem.productId.partNo,
@@ -2655,9 +2680,16 @@ export class RawMaterialService {
         productId: {
           partNo: partNo,
         },
-        status: ReceiptItem.WAITING,
+        status: ReceiptItem.HOLD2,
       },
     });
+
+    if (isEmpty(receiptItemPickup)) {
+      throw new HttpException(
+        'ไม่พบ item ใน Pickup receipt (status ต้องเป็น HOLD2)',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     const sumTransactionOfThisItem = await this.transactionRepository.sum(
       'quantity',
@@ -2666,7 +2698,7 @@ export class RawMaterialService {
         status: TransactionStatus.OUTBOUND
       },
     );
-    receiptItemPickup.quantity -= sumTransactionOfThisItem;
+    receiptItemPickup.quantity = Math.max(0, receiptItemPickup.quantity - (sumTransactionOfThisItem ?? 0));
     const response = {
       ...omit(receiptItem, ['productId', 'area', 'supplierId']),
       partNo: receiptItem.productId.partNo,

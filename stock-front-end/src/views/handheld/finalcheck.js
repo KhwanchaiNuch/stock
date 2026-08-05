@@ -646,11 +646,18 @@ const QRScan = (props) => {
                   <option className="placeholder" disabled value="">
                     {''}
                   </option>
-                  <option disabled>{'Location (MS1, MS2)'}</option>
-                  <option value="MS1">MS1</option>
-                  <option value="MS2">MS2</option>
+                  <option value="MS2-A1">MS2-A1</option>
+                  <option value="MS2-A2">MS2-A2</option>
+                  <option value="MS2-A3">MS2-A3</option>
+                  <option value="MS2-A4">MS2-A4</option>
+                  <option value="MS2-A5">MS2-A5</option>
+                  <option value="MS2-A6">MS2-A6</option>
+                  <option value="MS2-A7">MS2-A7</option>
+                  <option value="MS2-A8">MS2-A8</option>
+                  <option value="MS2-A9">MS2-A9</option>
+                  <option value="MS2-A10">MS2-A10</option>
                 </select>
-                <label>{'Location (MS1, MS2)'}</label>
+                <label>{'Location (MS2-A1 ~ MS2-A10)'}</label>
               </div>
 
               <div className="button-wrapper">

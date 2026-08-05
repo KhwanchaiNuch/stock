@@ -315,6 +315,28 @@ const QRScanOutbound = (props) => {
 
               const inLotQTY = get(response, 'data.result.quantity','');
               const inPickupQTY = get(response, 'data.result.pickup.quantity','');
+              if (+inPickupQTY <= 0) {
+                setLoading(false)
+                openModal({
+                  type: 'ERROR_SCAN',
+                  data: {
+                    title: 'Outbound',
+                    error: 'Item นี้ถูก Outbound ครบแล้ว'
+                  }
+                })
+                return
+              }
+              if (+inLotQTY <= 0) {
+                setLoading(false)
+                openModal({
+                  type: 'ERROR_SCAN',
+                  data: {
+                    title: 'Outbound',
+                    error: 'Lot นี้หมด Stock แล้ว'
+                  }
+                })
+                return
+              }
               setInLotQTY(+inLotQTY)
               setInPickupQTY(+inPickupQTY)
               setLoading(false)
