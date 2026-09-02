@@ -979,12 +979,16 @@ export class RawMaterialService {
       _transactionStatus = TransactionStatus.HOLD2;
       _operationType = OperationType.HOLD2;
 
-      // Backend guard: block if HOLD2 already covers full item quantity
+      // Backend guard: block if net HOLD2 (HOLD2 - OUTBOUND from FinalCheck) >= item quantity
       const existingHold2 = await this.transactionRepository.sum('quantity', {
         itemId: receiptItem.id,
         status: TransactionStatus.HOLD2,
-      });
-      if ((existingHold2 ?? 0) >= receiptItem.quantity) {
+      }) ?? 0;
+      const existingOutbound = await this.transactionRepository.sum('quantity', {
+        itemId: receiptItem.id,
+        status: TransactionStatus.OUTBOUND,
+      }) ?? 0;
+      if ((existingHold2 - existingOutbound) >= receiptItem.quantity) {
         throw new HttpException(
           'Item นี้ถูก Outbound (HOLD2) ครบแล้ว',
           HttpStatus.BAD_REQUEST,
@@ -2597,7 +2601,11 @@ export class RawMaterialService {
       'quantity',
       { itemId: receiptItemPickup.id, status: TransactionStatus.HOLD2 },
     ) ?? 0;
-    const sumTransactionOfThisItem = sumOutboundOfThisItem + sumHold2OfThisItem;
+    // Internal: sumOutbound (handheld creates OUTBOUND directly)
+    // External: net HOLD2 = HOLD2 - OUTBOUND(FinalCheck) → allows re-scan after partial FinalCheck
+    const sumTransactionOfThisItem = sumHold2OfThisItem > 0
+      ? Math.max(0, sumHold2OfThisItem - sumOutboundOfThisItem)
+      : sumOutboundOfThisItem;
 
     console.log("receiptItemPickup.quantity : ", receiptItemPickup.quantity);
     console.log("receiptItemPickup.grade : ", receiptItemPickup.grade);
