@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useStoreActions } from 'easy-peasy'
 import AppViewWrapperPure from 'components/app-view-wrapper'
 import { withRouter } from 'react-router-dom'
-import { get, map, isEmpty } from 'lodash'
+import { get } from 'lodash'
 import styled from 'styled-components'
 import { httpCommon } from '../../connectors/http-common'
 import usePost from '../../hooks/usePost'
@@ -12,10 +12,10 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   position: relative;
-  .header-mobile{
+  .header-mobile {
     display: flex;
   }
-  .container-wrapper-section-form{
+  .container-wrapper-section-form {
     width: 100%;
     padding: 16px;
     overflow: scroll;
@@ -23,37 +23,37 @@ const Container = styled.div`
       height: 568px;
     }
   }
-  h3{
-    color: #2B3D8F;
+  h3 {
+    color: #2b3d8f;
     font-size: 20px;
     font-style: normal;
     font-weight: 700;
-    line-height: 30px; 
+    line-height: 30px;
     letter-spacing: 0.4px;
     margin-top: 15px;
-    margin-bottom: 31px;
+    margin-bottom: 16px;
   }
-  .button-wrapper{
+  .button-wrapper {
     margin-top: 8px;
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
     border-radius: 100px;
-    background-color: #2BA6E1;
+    background-color: #2ba6e1;
     height: 72px;
     width: 100%;
     padding: 16px 28px;
     z-index: 10;
-    .btn-submit{
+    .btn-submit {
       width: calc(100% - 12px);
       height: 40px;
       display: flex;
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      p{
-        color: #FFFFFF;
+      p {
+        color: #ffffff;
         text-align: center;
         font-size: 14px;
         font-style: normal;
@@ -61,18 +61,18 @@ const Container = styled.div`
         line-height: 24px;
         letter-spacing: 0.4px;
       }
-      &.confirm{
+      &.confirm {
         border-radius: 100px;
-        background-color: #FFFFFF;
-        p{
-          color: #2B3D8F;
+        background-color: #ffffff;
+        p {
+          color: #2b3d8f;
         }
       }
     }
   }
   input {
     border-radius: 12px;
-    border: 1px solid #B0BCCB;
+    border: 1px solid #b0bccb;
     width: 100%;
     height: 60px;
     color: transparent;
@@ -80,416 +80,252 @@ const Container = styled.div`
     font-style: normal;
     font-weight: 400;
     line-height: 24px;
-    text-indent: 12px;
-    padding: 0px 0px 0px 0px;
-    margin-bottom: 16px;
-    &:focus{
-      padding: 4px 0px 0px 0px;
-      border: 1px solid #0050F0;
+    &:focus {
+      color: #002d63;
+      border: 1px solid #0050f0;
       outline: none;
-      color: #002D63;
     }
-    &:valid{
-      padding: 4px 0px 0px 0px;
-      color: #002D63;
+    &:valid {
+      color: #002d63;
+    }
+    &:disabled {
+      background: #f5f5f5;
+      color: #999;
     }
   }
-  input[type=date]{
-    text-indent: 5px;
-  }
-  select{
-    border-radius: 12px;
-    border: 1px solid #B0BCCB;
+  .input_wrap {
     width: 100%;
-    height: 60px;
-    color: #002D63;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 24px;
-    text-indent: 7px;
-    padding: 0px 0px 0px 0px;
-    margin-bottom: 16px;
-    &:focus{
-      padding: 4px 0px 0px 0px;
-      border: 1px solid #0050F0;
-      outline:none;
-    }
-    &:valid{
-      padding: 4px 0px 0px 0px;
-    }
-    .placeholder {
-      display: none;
-    }
-  }
-
-  /* Label style after Input feild is in focus. Can also use input:focus ~ label to select sibling. */
-  input:focus + label, input:valid + label{
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 16px;
-    letter-spacing: 0.4px;
-    color: #5B6A83;
-    top: 8px;
-  }
-  select:focus + label, select:valid + label{
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 16px;
-    letter-spacing: 0.4px;
-    color: #5B6A83;
-    top: 8px;
-    z-index: 10px;
-  }
-  .input_wrap,
-  .select_wrap {
-    width: 100%;
-    height: auto; 
+    height: auto;
     position: relative;
-    &.focus{
-      input{
-        color: #002D63;
-      }
-      label{
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 16px;
-        letter-spacing: 0.4px;
-        color: #5B6A83;
-        top: 8px;
-      }
+    margin-bottom: 16px;
+    &.focus input { color: #002d63; }
+    &.focus label {
+      font-size: 12px;
+      color: #5b6a83;
+      top: 8px;
     }
   }
-  .input_wrap label,
-  .select_wrap label{
+  .input_wrap label {
     font-size: 16px;
-    font-style: normal;
     font-weight: 400;
     line-height: 24px;
-    color: #B0BCCB;
+    color: #b0bccb;
     position: absolute;
     top: 18px;
     left: 12px;
-    transition:0.2s ease all; 
-    -moz-transition:0.2s ease all; 
-    -webkit-transition:0.2s ease all;
+    transition: 0.2s ease all;
     pointer-events: none;
   }
-  .btn-wrapper{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+  input:focus + label,
+  input:valid + label {
+    font-size: 12px;
+    color: #5b6a83;
+    top: 8px;
+  }
+  .pending-table {
     width: 100%;
-    .btn{
-      width: calc(50% - 12px);
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #2B3D8F;
-      color: #FFF;
-      text-align: center;
-      font-size: 20px;
-      font-style: normal;
-      font-weight: 700;
-      line-height: 32px;
-      letter-spacing: 0.4px;
-      cursor: pointer;
-      &.no-bg{
-        color: #2B3D8F;
-        border: 1px solid #2B3D8F;
-        background: transparent;
-      }
+    border-collapse: collapse;
+    margin-top: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    th {
+      background: #2b3d8f;
+      color: #fff;
+      padding: 8px 6px;
+      text-align: left;
     }
+    td {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 8px 6px;
+      color: #002d63;
+    }
+    .btn-remove {
+      background: #e53e3e;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+  }
+  .tag {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #2b3d8f;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  h1 {
+    color: #002d63;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 0;
   }
 `
 
 const QRScanMove = (props) => {
   const showNotification = useStoreActions((actions) => actions.notification.showNotification)
-  const { openModal } = useStoreActions(actions => actions.modal)
-  const [partNo, setPartNo] = useState('')
-  const [lotNo, setLotNo] = useState('')
-  const [areaNo, setAreaNo] = useState('')
+  const { openModal } = useStoreActions((actions) => actions.modal)
+
+  // Step 1: Scan destination area
   const [areaTo, setAreaTo] = useState('')
-  const [areaFromName, setAreaFromName] = useState('')
-  const [areaToNo, setAreaToNo] = useState('')
-  const [loading, setLoading] = useState('')
+  const [areaToName, setAreaToName] = useState('')
   const [stockType, setStockType] = useState('')
 
-  const refInput = useRef(null)
-  const refInput2 = useRef(null)
-  const refInput3 = useRef(null)
+  // Step 2: Scan QR codes → pending list
+  const [pendingItems, setPendingItems] = useState([]) // [{partNo, lotNo, partName, fromArea, stockType}]
+  const [loading, setLoading] = useState(false)
+
+  const refAreaTo = useRef(null)
+  const refQR = useRef(null)
 
   useEffect(() => {
-    if (refInput && refInput.current) {
-      refInput.current.focus()
+    if (refAreaTo && refAreaTo.current) {
+      refAreaTo.current.focus()
     }
-  }, [refInput])
+  }, [])
 
-  const handleOnHandheldArea = (result) => {
-        if (result) {
-            if (loading) return
-            setLoading(true)
-            try {
-                const http = httpCommon()
-                http.get('/api/v1/area', {
-                    params: {
-                        areaNo: result,
-                    }
-                }).then(response => {
-                    if (get(response, 'data.statusCode', '') === 200) {
-                        const dataTemp = get(response, 'data.result.items', '');
-                        if (dataTemp !== '' && dataTemp.length === 1) {
-                            setLoading(false)
-                            setAreaNo(dataTemp[0].areaNo)
-                            setAreaFromName(dataTemp[0].areaName)
-                            setStockType(dataTemp[0].typeOfStock)
-                            refInput2.current.focus()
-                        } else {
-                            setLoading(false)
-                            openModal({
-                                type: 'ERROR_SCAN',
-                                data: {
-                                    title: 'Move',
-                                    error: 'area not match'
-                                }
-                            })
-                        }
-                    } else {
-                        setLoading(false)
-                        openModal({
-                            type: 'ERROR_SCAN',
-                            data: {
-                                title: 'Move',
-                                error: get(response, 'data.error', '')
-                            }
-                        })
-                    }
-                }).catch((e) => {
-                    console.log(e)
-                    setLoading(false)
-                    openModal({
-                        type: 'ERROR_SCAN',
-                        data: {
-                            title: 'Move',
-                            error: get(e, 'response.data.message', '')
-                        }
-                    })
-                })
-            } catch (err) {
-                console.log('err: ', err)
-                setLoading(false)
-                openModal({
-                    type: 'ERROR_SCAN',
-                    data: {
-                        title: 'Move',
-                        error: err.toString()
-                    }
-                })
-            }
+  // After areaTo is set, focus QR input
+  useEffect(() => {
+    if (areaTo && refQR.current) {
+      refQR.current.focus()
+    }
+  }, [areaTo])
+
+  const handleScanAreaTo = (result) => {
+    if (!result || loading) return
+    setLoading(true)
+    const http = httpCommon()
+    http.get('/api/v1/area', { params: { areaNo: result } })
+      .then((response) => {
+        setLoading(false)
+        if (get(response, 'data.statusCode', '') === 200) {
+          const items = get(response, 'data.result.items', [])
+          if (items.length === 1) {
+            setAreaTo(items[0].areaNo)
+            setAreaToName(items[0].areaName)
+            setStockType(items[0].typeOfStock)
+          } else {
+            openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: 'Area not found' } })
+          }
+        } else {
+          openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: get(response, 'data.error', 'Error') } })
         }
+      })
+      .catch((e) => {
+        setLoading(false)
+        openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: get(e, 'response.data.message', e.toString()) } })
+      })
   }
 
-  const handleOnHandheldPartNo = (result) => {
-    if (result) {
-        if (loading) return
-        setLoading(true)
-        try {
-            // const receiptNo = result.split(',')[0].split('receiptNo=')[1]
-            // const invoiceNo = result.split(',')[1].split('invoiceNo=')[1]
-            // 032490,test01,LOT202311160003,11/16/2023,10
-            const extractData = result.split(',');
-            const partNo = extractData[0]
-            const lotNo = extractData[2]
-            // const partNo = extractData[0]
-            if (partNo && lotNo) {
-                const http = httpCommon()
-                http.get('/api/v1/raw-material/pre-move', {
-                    params: {
-                        partNo,
-                        lotNo,
-                        stockType,
-                    }
-                }).then(response => {
-                    if (get(response, 'data.statusCode', '') === 200) {
-                       const dataTemp= get(response, 'data.result.area','');
-                       
-                       console.log(dataTemp.areaName)
-                       console.log(areaFromName)
-                       console.log(dataTemp.areaNo)
-                       console.log(areaNo)
-                       console.log(dataTemp.areaName === areaFromName)
-                       console.log(dataTemp.areaNo === areaNo)
-                        if (
-                          dataTemp !== "" &&
-                          dataTemp.areaName === areaFromName &&
-                          dataTemp.areaNo === areaNo
-                        ) {
-                          setLoading(false);
-                          setPartNo(partNo);
-                          setLotNo(lotNo);
-                          refInput3.current.focus();
-                        } else {
-                          setLoading(false);
-                          openModal({
-                            type: "ERROR_SCAN",
-                            data: {
-                              title: "Move",
-                              error: "Scan fail this part not in this area",
-                            },
-                          });
-                        }
-                    } else {
-                        setLoading(false)
-                        openModal({
-                            type: 'ERROR_SCAN',
-                            data: {
-                                title: 'Move',
-                                error: get(response, 'data.error', '')
-                            }
-                        })
-                    }
-                })
-                    .catch((e) => {
-                        setLoading(false)
-                        openModal({
-                            type: 'ERROR_SCAN',
-                            data: {
-                                title: 'Move',
-                                error: e.toString()
-                            }
-                        })
-                    })
-            } else {
-                setLoading(false)
-                openModal({
-                    type: 'ERROR_SCAN',
-                    data: {
-                        title: 'Move',
-                        error: 'qr code is not valid'
-                    }
-                })
+  const handleScanQR = (result) => {
+    if (!result || loading) return
+    if (!areaTo) {
+      openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: 'Please scan destination area first' } })
+      return
+    }
+    setLoading(true)
+    try {
+      const parts = result.split(',')
+      const scannedPartNo = parts[0]
+      const scannedLotNo = parts[2]
+      if (!scannedPartNo || !scannedLotNo) {
+        setLoading(false)
+        openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: 'QR code is not valid' } })
+        return
+      }
+      // Check duplicate
+      const isDup = pendingItems.some((i) => i.lotNo === scannedLotNo && i.partNo === scannedPartNo)
+      if (isDup) {
+        setLoading(false)
+        openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: `LOT ${scannedLotNo} already in list` } })
+        return
+      }
+      const http = httpCommon()
+      http.get('/api/v1/raw-material/pre-move', {
+        params: { partNo: scannedPartNo, lotNo: scannedLotNo, stockType },
+      })
+        .then((response) => {
+          setLoading(false)
+          if (get(response, 'data.statusCode', '') === 200) {
+            const data = get(response, 'data.result', {})
+            setPendingItems((prev) => [
+              ...prev,
+              {
+                partNo: scannedPartNo,
+                lotNo: scannedLotNo,
+                partName: data.partName || '',
+                fromArea: get(data, 'area.areaNo', '-'),
+                stockType,
+              },
+            ])
+            // Clear QR input and refocus
+            if (refQR.current) {
+              refQR.current.value = ''
+              refQR.current.focus()
             }
-        } catch (err) {
-            console.log('err: ', err)
-            setLoading(false)
-            openModal({
-                type: 'ERROR_SCAN',
-                data: {
-                    title: 'Move',
-                    error: err.toString()
-                }
-            })
-        }
+          } else {
+            openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: get(response, 'data.error', 'Item not found') } })
+          }
+        })
+        .catch((e) => {
+          setLoading(false)
+          openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: get(e, 'response.data.message', e.toString()) } })
+        })
+    } catch (err) {
+      setLoading(false)
+      openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: err.toString() } })
     }
   }
 
-  const handleOnHandheldAreaTo = (result) => {
-    if (result) {
-        if (loading) return
-        setLoading(true)
-        try {
-            const http = httpCommon()
-            http.get('/api/v1/area', {
-                params: {
-                    areaNo: result,
-                }
-            }).then(response => {
-                if (get(response, 'data.statusCode', '') === 200) {
-                    const dataTemp = get(response, 'data.result.items', '');
-                    if (dataTemp !== '' && dataTemp.length === 1 && stockType === dataTemp[0].typeOfStock) {
-                        setLoading(false)
-                        setAreaTo(dataTemp[0].areaNo)
-                        setAreaToNo(dataTemp[0].areaNo)
-                    } else {
-                        setLoading(false)
-                        openModal({
-                            type: 'ERROR_SCAN',
-                            data: {
-                                title: 'Move',
-                                error: 'area not match'
-                            }
-                        })
-                    }
-                } else {
-                    setLoading(false)
-                    openModal({
-                        type: 'ERROR_SCAN',
-                        data: {
-                            title: 'Move',
-                            error: get(response, 'data.error', '')
-                        }
-                    })
-                }
-            }).catch((e) => {
-                console.log(e)
-                setLoading(false)
-                openModal({
-                    type: 'ERROR_SCAN',
-                    data: {
-                        title: 'Move',
-                        error: get(e, 'response.data.message', '')
-                    }
-                })
-            })
-        } catch (err) {
-            console.log('err: ', err)
-            setLoading(false)
-            openModal({
-                type: 'ERROR_SCAN',
-                data: {
-                    title: 'Move',
-                    error: err.toString()
-                }
-            })
-        }
-    }
+  const removeItem = (lotNo) => {
+    setPendingItems((prev) => prev.filter((i) => i.lotNo !== lotNo))
   }
 
   const { onPost } = usePost('/api/v1/raw-material/move')
 
-  const onSubmit = () => {
-      const variables = {
-          partNo: partNo,
-          lotNo: lotNo,
-          area: areaToNo,
-          stockType,
-      }
-      if (loading) return
-      setLoading(true)
-      onPost({
-          variables,
+  const onSubmit = async () => {
+    if (loading || pendingItems.length === 0) return
+    setLoading(true)
+    let successCount = 0
+    let errorMsg = ''
+    for (const item of pendingItems) {
+      await new Promise((resolve) => {
+        onPost({
+          variables: { partNo: item.partNo, lotNo: item.lotNo, area: areaTo, stockType: item.stockType },
           onDone: (res) => {
-              if (get(res, 'statusCode', '') === 200) {
-                  setLoading(false)
-                  location.reload()
-              } else {
-                  setLoading(false)
-                  openModal({
-                      type: 'ERROR_SCAN',
-                      data: {
-                          title: stockType+' Outbound',
-                          error: get(res, 'error', '')
-                      }
-                  })
-              }
+            if (get(res, 'statusCode', '') === 200) {
+              successCount++
+            } else {
+              errorMsg = `LOT ${item.lotNo}: ${get(res, 'error', 'Error')}`
+            }
+            resolve()
           },
           onError: (e) => {
-              console.log('onError ==>', e)
-              setLoading(false)
-              openModal({
-                  type: 'ERROR_SCAN',
-                  data: {
-                      title: stockType+' Outbound',
-                      error: get(e, 'response.data.message', '')
-                  }
-              })
-          }
+            errorMsg = `LOT ${item.lotNo}: ${get(e, 'response.data.message', e.toString())}`
+            resolve()
+          },
+        })
       })
+      if (errorMsg) break
+    }
+    setLoading(false)
+    if (errorMsg) {
+      openModal({ type: 'ERROR_SCAN', data: { title: 'Move', error: errorMsg } })
+    } else {
+      showNotification({
+        props: {
+          type: 'success',
+          title: `Move สำเร็จ ${successCount} รายการ → ${areaTo}`,
+          notAutoClose: false,
+          hasCloseBtn: false,
+        },
+      })
+      setTimeout(() => location.reload(), 1500)
+    }
   }
 
   return (
@@ -498,79 +334,98 @@ const QRScanMove = (props) => {
         <div className="box-scanner">
           <Container>
             <div className="header-mobile">
-              <h1>
-                {'Move'}
-              </h1>
+              <h1>{'Move'}</h1>
             </div>
             <div className="container-wrapper-section-form">
-              <h3>
-                {'From Location'}
-              </h3>
-              <div className="input_wrap focus">
+
+              {/* Step 1: To Area */}
+              <h3>{'Destination Area'}</h3>
+              <div className={`input_wrap${areaTo ? ' focus' : ''}`}>
                 <input
-                  ref={refInput}
+                  ref={refAreaTo}
                   type="text"
                   required
-                  value={areaNo}
-                  disabled={areaNo !== ''}
+                  defaultValue=""
+                  disabled={!!areaTo}
                   onChange={(e) => {
-                    handleOnHandheldArea(e.target.value)
-                  }}
-                // onKeyDown={(e) => {
-                //     if (e.key === 'Enter') {
-                //         handleOnHandheld('receiptNo=RM202310050002,invoiceNo=INV202310050002')
-                //     }
-                // }}
-                />
-                <label>{'Scan Area No.'}</label>
-              </div>
-              <div className="input_wrap focus">
-                <input
-                  ref={refInput2}
-                  type="text"
-                  required
-                  value={partNo}
-                  disabled={areaNo ==='' | partNo !== ''}
-                  onChange={(e) => {
-                    handleOnHandheldPartNo(e.target.value)
+                    if (e.target.value) handleScanAreaTo(e.target.value)
                   }}
                 />
-                <label>{'Scan Part'}</label>
+                <label>{'Scan Destination Area No.'}</label>
               </div>
-              <h3>
-                {'To Location'}
-              </h3>
-              <div className="input_wrap focus">
-                <input
-                  ref={refInput3}
-                  type="text"
-                  required
-                  value={areaTo}
-                  disabled={areaNo ==='' | partNo === '' | areaTo !== ''}
-                  onChange={(e) => {
-                    handleOnHandheldAreaTo(e.target.value)
-                  }}
-                />
-                <label>{'Scan destination Area No.'}</label>
-              </div>
+              {areaTo && (
+                <div style={{ marginBottom: 16 }}>
+                  <span className="tag">➡ {areaTo} — {areaToName} ({stockType})</span>
+                  <span
+                    style={{ marginLeft: 8, color: '#e53e3e', cursor: 'pointer', fontSize: 13 }}
+                    onClick={() => { setAreaTo(''); setAreaToName(''); setStockType(''); setPendingItems([]) }}
+                  >
+                    ✕ เปลี่ยน
+                  </span>
+                </div>
+              )}
+
+              {/* Step 2: Scan QR */}
+              {areaTo && (
+                <>
+                  <h3>{'Scan Items'}</h3>
+                  <div className="input_wrap">
+                    <input
+                      ref={refQR}
+                      type="text"
+                      required
+                      defaultValue=""
+                      disabled={loading}
+                      onChange={(e) => {
+                        if (e.target.value) handleScanQR(e.target.value)
+                      }}
+                    />
+                    <label>{'Scan QR Code'}</label>
+                  </div>
+
+                  {/* Pending list */}
+                  {pendingItems.length > 0 && (
+                    <table className="pending-table">
+                      <thead>
+                        <tr>
+                          <th>Part No.</th>
+                          <th>LOT</th>
+                          <th>From</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingItems.map((item) => (
+                          <tr key={item.lotNo}>
+                            <td>{item.partNo}</td>
+                            <td>{item.lotNo}</td>
+                            <td>{item.fromArea}</td>
+                            <td>
+                              <button className="btn-remove" onClick={() => removeItem(item.lotNo)}>
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </>
+              )}
+
               <div className="button-wrapper">
-                <div
-                  className="btn-submit"
-                  onClick={() => {
-                    props.history.goBack()
-                  }}
-                >
+                <div className="btn-submit" onClick={() => props.history.goBack()}>
                   <p>{'Cancel'}</p>
                 </div>
                 <div
-                  className="btn-submit confirm"
-                  onClick={() => {
-                    onSubmit()
-                  }}
+                  className={`btn-submit confirm`}
+                  onClick={onSubmit}
+                  style={{ opacity: pendingItems.length === 0 || loading ? 0.5 : 1 }}
                 >
-                  <p>{'Confirm'}</p>
+                  <p>{loading ? 'Processing...' : `Confirm (${pendingItems.length})`}</p>
                 </div>
               </div>
+
             </div>
           </Container>
         </div>

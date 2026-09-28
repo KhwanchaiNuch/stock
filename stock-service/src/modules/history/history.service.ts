@@ -38,12 +38,14 @@ export class HistoryService {
     type = '',
     partNo = '',
     inputPartName = undefined,
+    lotNo = undefined,
   }: {
     limit: number;
     offset: number;
     type: string;
     partNo: string;
     inputPartName: string;
+    lotNo?: string;
   }): Promise<{ items: HistoryEntity[]; total: number }> {
     const options: FindManyOptions<HistoryEntity> = {
       relations: ['productId', 'area', 'operator'],
@@ -90,6 +92,12 @@ export class HistoryService {
         productId: {
           partName: ILike(`%${inputPartName}%`),
         },
+      };
+    }
+    if (lotNo) {
+      options.where = {
+        ...options.where,
+        lotNo: ILike(`%${lotNo}%`),
       };
     }
     const items = await this.historyRepository.find(options);

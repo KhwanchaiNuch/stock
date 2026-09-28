@@ -22,6 +22,7 @@ const HistoryView = (props) => {
     const showNotification = useStoreActions((actions) => actions.notification.showNotification)
     const [operationType, setOperationType] = useState('ALL')
     const [inputPartName, setInputPartName] = useState('')
+    const [inputLotNo, setInputLotNo] = useState('')
 
 
     const [inputValue, setInputValue] = useState()
@@ -35,6 +36,7 @@ const HistoryView = (props) => {
           type: operationType? operationType : undefined,
           partNo: inputValue? inputValue : undefined,
           inputPartName: inputPartName? inputPartName: undefined,
+          lotNo: inputLotNo? inputLotNo: undefined,
         }
         onFetchQuery('/api/v1/history', {
             variables: {
@@ -62,6 +64,7 @@ const HistoryView = (props) => {
         type: operationType? operationType : undefined,
         partNo: inputValue? inputValue : undefined,
         inputPartName: inputPartName? inputPartName: undefined,
+        lotNo: inputLotNo? inputLotNo: undefined,
       }
       onFetchQuery('/api/v1/history', {
         variables: {
@@ -86,11 +89,12 @@ const HistoryView = (props) => {
             type: operationType? operationType : undefined,
             partNo: inputValue? inputValue : undefined,
             inputPartName: inputPartName? inputPartName: undefined,
+            lotNo: inputLotNo? inputLotNo: undefined,
           }
           onSearch({ filter })
       }, 1000)
       return () => clearTimeout(delayInputTimeoutId)
-    }, [inputValue, 1000])
+    }, [inputValue, inputPartName, inputLotNo, 1000])
 
 
     const onSearch = ({ filter }) => {
@@ -102,12 +106,18 @@ const HistoryView = (props) => {
       })
     }
 
+    const handleInputLotNoChange = (event) => {
+      setInputLotNo(event.target.value)
+      setDebounced(true)
+    }
+
     const onSelectType = async (e) => {
       setOperationType(e.target.value)
       const filter = {
         type: e.target.value,
         partNo: inputValue? inputValue : undefined,
         inputPartName: inputPartName? inputPartName: undefined,
+        lotNo: inputLotNo? inputLotNo: undefined,
       }
       onSearch({filter})
     }
@@ -124,6 +134,7 @@ const HistoryView = (props) => {
         type: operationType,
         partNo: inputValue,
         inputPartName: inputPartName,
+        lotNo: inputLotNo,
       }
       if (loadinPrint) return;
       setLoadingPrint(true);
@@ -195,8 +206,9 @@ const HistoryView = (props) => {
         type: operationType? operationType : undefined,
         partNo: inputValue? inputValue : undefined,
         inputPartName: inputPartName? inputPartName: undefined,
+        lotNo: inputLotNo? inputLotNo: undefined,
       }
-      if (event.key === "Enter" && debounced) { 
+      if (event.key === "Enter" && debounced) {
         setDebounced(false)
         onSearch({ filter });
       }
@@ -256,11 +268,26 @@ const HistoryView = (props) => {
                       type="text"
                       required
                       value={inputPartName}
-                      // ref={reference}
                       onChange={handleInputPartNameChange}
                       onKeyUp={handleEnter}
                     />
                     <label>{"Search Part Name"}</label>
+                  </div>
+                  <div
+                    className="input_wrap has-icon-left"
+                    style={{ width: "240px", marginLeft: '16px' }}
+                  >
+                    <div className="icon-left">
+                      <img src={IcoSearch} />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={inputLotNo}
+                      onChange={handleInputLotNoChange}
+                      onKeyUp={handleEnter}
+                    />
+                    <label>{"Search LOT"}</label>
                   </div>
                 </div>
                 {!loading && (
@@ -279,6 +306,9 @@ const HistoryView = (props) => {
                           </th>
                           <th className="center">
                             <p>{"Part No."}</p>
+                          </th>
+                          <th className="center">
+                            <p>{"LOT"}</p>
                           </th>
                           <th className="center">
                             <p>{"Name"}</p>
@@ -360,6 +390,14 @@ const HistoryView = (props) => {
                                 }}
                               >
                                 <p style={{ whiteSpace: item.productId.partNo.length < 30 ? "nowrap" : "normal" }}>{get(item, "productId.partNo", "")}</p>
+                              </td>
+                              <td
+                                className="center"
+                                onClick={() => {
+                                  onSelect();
+                                }}
+                              >
+                                <p>{get(item, "lotNo", "") || "-"}</p>
                               </td>
                               <td
                                 className="center"

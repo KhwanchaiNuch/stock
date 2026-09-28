@@ -551,6 +551,7 @@ export class RawMaterialService {
       area: dbArea,
       amount: quantity,
       stock: products.items[0].stock,
+      lotNo,
     });
     await this.historyRepository.save(newHistory);
     return { success: true };
@@ -696,6 +697,7 @@ export class RawMaterialService {
       area: dbArea,
       amount: quantity,
       stock: products.items[0].stock,
+      lotNo,
     });
     await this.historyRepository.save(newHistory);
 
@@ -857,6 +859,7 @@ export class RawMaterialService {
       area: dbArea,
       amount: quantity,
       stock: products.items[0].stock,
+      lotNo,
     });
     await this.historyRepository.save(newHistory);
     return { success: true };
@@ -1114,6 +1117,7 @@ export class RawMaterialService {
         area: dbArea,
         amount: quantity,
         stock: products.items[0].stock,
+        lotNo,
       });
       await this.historyRepository.save(newHistory);
     } catch (err) {
@@ -1305,6 +1309,7 @@ export class RawMaterialService {
         area: dbArea,
         amount: quantity,
         stock: products.items[0].stock,
+        lotNo,
       });
       await this.historyRepository.save(newHistory);
     } catch (err) {
@@ -1537,6 +1542,7 @@ export class RawMaterialService {
           area: dbArea,
           amount: quantityOk,
           stock: products.items[0].stock,
+          lotNo,
         });
         await this.historyRepository.save(newHistory);
       } catch (err) {
@@ -1590,6 +1596,7 @@ export class RawMaterialService {
           area: dbArea,
           amount: quantityOk,
           stock: products.items[0].stock,
+          lotNo,
         });
         await this.historyRepository.save(newHistory);
       } catch (err) {
@@ -1684,6 +1691,7 @@ export class RawMaterialService {
       area: dbArea,
       amount: countInboundItemQuantity - countOutboundItemQuantity,
       stock: products.items[0].stock,
+      lotNo,
     });
     await this.historyRepository.save(newHistoryMove);
     return { success: true };
@@ -1759,6 +1767,7 @@ export class RawMaterialService {
       area: dbArea,
       amount: move,
       stock: products.items[0].stock,
+      lotNo,
     });
     await this.historyRepository.save(newHistoryMove);
     return { success: true };
@@ -2576,7 +2585,8 @@ export class RawMaterialService {
     //     status: ReceiptItem.WAITING,
     //   },
     // });
-    const receiptItemPickup = await this.rawMaterialItemRepository.findOne({
+    // ค้นหา pickup item ที่เป็น WAITING ก่อน ถ้าไม่มีให้ดูที่ OUTBOUND (กรณีสแกนส่วนที่เหลือ)
+    let receiptItemPickup = await this.rawMaterialItemRepository.findOne({
       relations: ['productId'],
       where: {
         receiptNo: {
@@ -2588,6 +2598,25 @@ export class RawMaterialService {
         status: ReceiptItem.WAITING,
       },
     });
+
+    if (!receiptItemPickup) {
+      receiptItemPickup = await this.rawMaterialItemRepository.findOne({
+        relations: ['productId'],
+        where: {
+          receiptNo: {
+            receiptNo: receiptNo,
+          },
+          productId: {
+            partNo,
+          },
+          status: ReceiptItem.OUTBOUND,
+        },
+      });
+    }
+
+    if (!receiptItemPickup) {
+      throw new HttpException('Not found pickup item for this receiptNo and partNo', HttpStatus.BAD_REQUEST);
+    }
 
     console.log("partNo : ", partNo);
     console.log("receiptNo : ", receiptNo);

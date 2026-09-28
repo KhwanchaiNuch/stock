@@ -42,9 +42,10 @@ export class HistoryController {
       type: string;
       partNo: string;
       inputPartName: string;
+      lotNo: string;
     },
   ) {
-    const { limit, offset, type, partNo, inputPartName } = params;
+    const { limit, offset, type, partNo, inputPartName, lotNo } = params;
 
     const result = await this.historyService.findAll({
       limit,
@@ -52,6 +53,7 @@ export class HistoryController {
       type,
       partNo,
       inputPartName,
+      lotNo,
     });
     return {
       statusCode: HttpStatus.OK,
@@ -71,6 +73,7 @@ export class HistoryController {
     const type = req['body']['type'];
     const partNo = req['body']['partNo'];
     const inputPartName = req['body']['inputPartName'];
+    const lotNo = req['body']['lotNo'];
     const worksheet = workbook.addWorksheet('History_');
     const result = await this.historyService.findAll({
       limit,
@@ -78,6 +81,7 @@ export class HistoryController {
       type,
       partNo,
       inputPartName,
+      lotNo,
     });
     // Add data to the worksheet
     // Header
@@ -86,6 +90,7 @@ export class HistoryController {
       'Operation',
       'Operator',
       'Code',
+      'LOT',
       'Name',
       'Area',
       'Amount',
@@ -100,6 +105,7 @@ export class HistoryController {
           row.type,
           row.operator ? row.operator.firstName : '-',
           row.productId ? row.productId.partNo : '-',
+          row.lotNo ? row.lotNo : '-',
           row.productId ? row.productId.partName : '-',
           row.area ? row.area.areaName : '-',
           row.amount,

@@ -541,8 +541,17 @@ const [isAllDone, setIsAllDone] = useState(false)
       variables,
       onDone: (res) => {
         if (get(res, 'statusCode', '') === 200) {
-          
+
           setLoading(false)
+
+          showNotification({
+            props: {
+              type: 'success',
+              title: `Inbound สำเร็จ — LOT: ${lotNo}`,
+              notAutoClose: false,
+              hasCloseBtn: false,
+            },
+          })
 
           setPartNo('')
           setPartName('')

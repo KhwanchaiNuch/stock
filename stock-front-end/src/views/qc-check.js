@@ -29,6 +29,7 @@ const QcCheckView = (props) => {
 
   const [inputPartName, setInputPartName] = useState('')
   const [inputValue, setInputValue] = useState('')
+  const [inputLotNo, setInputLotNo] = useState('')
 
   // ⭐ Date Filter
   const [inputDate, setInputDate] = useState('')
@@ -43,7 +44,8 @@ const QcCheckView = (props) => {
       type: operationType && operationType !== 'ALL' ? operationType : undefined,
       partNo: inputValue ? inputValue : undefined,
       inputPartName: inputPartName ? inputPartName : undefined,
-      date: inputDate ? inputDate : undefined,   // ⭐ เพิ่ม date filter
+      date: inputDate ? inputDate : undefined,
+      lotNo: inputLotNo ? inputLotNo : undefined,
     }
   }
 
@@ -95,13 +97,18 @@ const QcCheckView = (props) => {
     setDebounced(true)
   }
 
+  const handleInputLotNoChange = (event) => {
+    setInputLotNo(event.target.value)
+    setDebounced(true)
+  }
+
   // ⭐ Date Change
   const handleDateChange = (e) => {
     setInputDate(e.target.value)
     setDebounced(true)
   }
 
-  // ⭐ Debounce สำหรับ PartNo/PartName/Date
+  // ⭐ Debounce สำหรับ PartNo/PartName/Date/LotNo
   useEffect(() => {
     if (!debounced) return
     const delayInputTimeoutId = setTimeout(() => {
@@ -109,7 +116,7 @@ const QcCheckView = (props) => {
       onSearch({ filter })
     }, 1000)
     return () => clearTimeout(delayInputTimeoutId)
-  }, [inputValue, inputPartName, inputDate])
+  }, [inputValue, inputPartName, inputDate, inputLotNo])
 
   const onSearch = ({ filter }) => {
     onFetchQuery('/api/v1/transactions', {
@@ -258,6 +265,21 @@ const QcCheckView = (props) => {
                   <label>Search Part Name</label>
                 </div>
 
+                {/* LOT No */}
+                <div className="input_wrap has-icon-left" style={{ width: '330px', margin: '0px 16px' }}>
+                  <div className="icon-left">
+                    <img src={IcoSearch} alt="search-lotno" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={inputLotNo}
+                    onChange={handleInputLotNoChange}
+                    onKeyUp={handleEnter}
+                  />
+                  <label>Search LOT</label>
+                </div>
+
                {/* ⭐ Type Select */}
                 <div className="select_wrap" style={{ width: '220px', margin: '0px 16px' }}>
                   <select required value={operationType} onChange={onSelectType}>
@@ -307,6 +329,7 @@ const QcCheckView = (props) => {
                                       : [...prev, item.id]
                                   )
                                 }}
+                                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
                               />
                             </td>
                             <td><p>{item.partNo}</p></td>

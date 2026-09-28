@@ -73,6 +73,11 @@ export class TransactionService {
       qb.andWhere(`DATE(t.createdAt) = :date`, { date });
     }
 
+    // ⭐ FILTER by LOT No
+    if (lotNo) {
+      qb.andWhere('r.lot_number ILIKE :lotNo', { lotNo: `%${lotNo}%` });
+    }
+
     // Count total result
     const total = await qb.getCount();
 

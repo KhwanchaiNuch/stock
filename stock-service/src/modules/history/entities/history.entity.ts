@@ -60,6 +60,11 @@ export class HistoryEntity {
   @Column({
     nullable: true,
   })
+  lotNo: string;
+
+  @Column({
+    nullable: true,
+  })
   note: string;
 
   @CreateDateColumn({

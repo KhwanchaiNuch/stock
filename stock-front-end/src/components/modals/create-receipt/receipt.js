@@ -354,7 +354,6 @@ useEffect(() => {
               type="number"
               required
               min={1}
-              max={100}
               value={palletCount}
               onChange={(e) => {
                 let count = parseInt(e.target.value, 10);
@@ -364,8 +363,6 @@ useEffect(() => {
                   setPalletQTY([]);
                   return;
                 }
-
-                if (count > 100) count = 100;
 
                 setPalletCount(count);
 

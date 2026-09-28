@@ -670,6 +670,15 @@ const ReceiptListContainer = ({ hide, key, receiptNo, status }) => {
                     status !== "NOT_COMPLETE"
                   )
                     return;
+                  const waitingItems = get(data, "result.receiptItem", []).filter(
+                    (item) => item.status === "WAITING"
+                  );
+                  if (waitingItems.length > 0) {
+                    const ok = window.confirm(
+                      `ยังมี ${waitingItems.length} รายการที่ยังไม่ได้ดำเนินการ\nต้องการ Complete Receipt นี้หรือไม่?`
+                    );
+                    if (!ok) return;
+                  }
                   openModal({
                     type: "COMPLETE_RECEIPT",
                     data: { receiptNo },
