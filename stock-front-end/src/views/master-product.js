@@ -4,6 +4,7 @@ import IcoCreateFile from 'assets/images/ico-create-file.png'
 import IcoAddReceipt from 'assets/images/ico-add-receipt.png'
 import IcoPlus from 'assets/images/ico-plus.png'
 import { map, some, get, reject, isEmpty } from 'lodash'
+import delay from 'utils/delay'
 import Pagination from 'components/pagination'
 import { useStoreActions } from 'easy-peasy'
 import useDetectShift from 'hooks/useDetectShift'
@@ -499,17 +500,24 @@ const onDeleteFn = async () => {
                       />
                       Edit
                     </div>
-                     {/* <div
-                                        className={`btn-menu no-bg ${isEmpty(selected) ? 'disabled' : ''}`}
-                                        onClick={() => {
-                                            if (!isAllow) return
-                                            if (isEmpty(selected)) return
-                                            onDeleteFn()
-                                        }}
-                                    >
-                                        <img src={selected.length !== 1 ? IcoEditGray : IcoEditBlue} />
-                                        Delete
-                                    </div>  */}
+                    {(() => {
+                      const canDelete = !isEmpty(selected) && selected.every(
+                        (s) => (get(s, 'item.status', '') || 'Active') !== 'Active'
+                      )
+                      return (
+                        <div
+                          className={`btn-menu no-bg ${!canDelete ? 'disabled' : ''}`}
+                          onClick={() => {
+                            if (!isAllow || !canDelete) return
+                            if (!window.confirm(`ลบ ${selected.length} รายการ?\n(เฉพาะ product ที่ไม่ใช่ Active)`)) return
+                            onDeleteFn()
+                          }}
+                        >
+                          <img src={canDelete ? IcoEditBlue : IcoEditGray} />
+                          Delete
+                        </div>
+                      )
+                    })()}
                   </div>
                 </div>
               </div>

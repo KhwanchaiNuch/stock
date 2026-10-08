@@ -193,6 +193,13 @@ export class ProductService {
     throw new NotFoundException('Not found product');
   }
 
+  // ถ้า Inactive อยู่แล้ว → ลบออกจาก DB จริง (soft delete)
+  if (product.status === 'Inactive') {
+    await this.productRepository.softRemove(product);
+    return { success: true };
+  }
+
+  // ยังไม่ Inactive → ตรวจ stock ก่อน
   const products = await this.getSumItem({
     limit: 1,
     offset: 0,
@@ -207,10 +214,10 @@ export class ProductService {
     throw new BadRequestException('Can not delete product because stock > 0');
   }
 
- // await this.productRepository.softRemove(product);
- await this.productRepository.update(id, {
-  status: 'Inactive',
-});
+  // stock = 0 → เปลี่ยนเป็น Inactive
+  await this.productRepository.update(id, {
+    status: 'Inactive',
+  });
 
   return { success: true };
 }

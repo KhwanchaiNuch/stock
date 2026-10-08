@@ -387,11 +387,6 @@ const QcCheckView = (props) => {
                     Edit
                   </div>
 
-                  {/* EDIT ALL */}
-                  <div className="btn-menu" onClick={handleEditAll}>
-                    <img src={IcoExport} />
-                    Edit ALL
-                  </div>
 
                 </div>
               </div>
