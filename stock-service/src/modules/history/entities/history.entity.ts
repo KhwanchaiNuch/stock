@@ -58,6 +58,7 @@ export class HistoryEntity {
   stock: number;
 
   @Column({
+    name: 'lot_no',
     nullable: true,
   })
   lotNo: string;
