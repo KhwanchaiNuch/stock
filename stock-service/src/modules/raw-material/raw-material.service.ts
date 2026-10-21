@@ -182,7 +182,8 @@ export class RawMaterialService {
       date,
       receiptNo,
       customer,
-      grade
+      grade,
+      splitpalletcount,
     } = body;
     const dbData = await this.rawMaterialItemRepository.findOne({
       where: {
@@ -251,7 +252,8 @@ export class RawMaterialService {
           ? ReceiptItem.WAITING
           : ReceiptItem.DRAFT,
       createdBy,
-      grade
+      grade,
+      splitpalletcount: splitpalletcount || 0,
     });
     await this.rawMaterialItemRepository.save(receiptItem);
     return omit(receiptItem, ['createdBy', 'receivedBy.userToken']);

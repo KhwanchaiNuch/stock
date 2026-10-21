@@ -154,4 +154,7 @@ export class RawMaterialItemEntity {
     nullable: true,   // ใส่ก็ได้ ไม่ใส่ก็ได้ ถ้า DB พร้อมแล้ว
   })
   grade: string;
+
+  @Column({ name: 'split_pallet_count', nullable: true, type: 'int', default: 0 })
+  splitpalletcount: number;
 }

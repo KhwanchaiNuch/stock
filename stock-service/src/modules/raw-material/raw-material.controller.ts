@@ -846,60 +846,80 @@ export class RawMaterialController {
 
     // Generate QR code and embed it in the PDF
     let i = 1;
-    for (const item of receiptItems) {
-      if (i % 5 === 0) {
-        pdfDoc.addPage(); // Start a new page
-        i = 1;
+    let runningBoxNo = 1; // running box number across all pallets (for split pallet)
+    for (let palletIdx = 0; palletIdx < receiptItems.length; palletIdx++) {
+      const item = receiptItems[palletIdx];
+      const splitCount = item.splitpalletcount && item.splitpalletcount > 0 ? item.splitpalletcount : 0;
+
+      if (splitCount > 0) {
+        // Split pallet: generate splitCount QR codes for this item
+        const bagQty = Math.round((item.quantity / splitCount) * 100) / 100;
+        for (let b = 0; b < splitCount; b++) {
+          if (i > 1 && (i - 1) % 5 === 0) {
+            pdfDoc.addPage();
+            i = 1;
+          }
+          const boxLabel = `Box${runningBoxNo}-${palletIdx + 1}`;
+          const file =
+            item.productId.partNo + ',' +
+            item.productId.partName + ',' +
+            item.lotNo + ',' +
+            item.date.toLocaleDateString() + ',' +
+            item.supplierId.supplierName + ',' +
+            bagQty + ',' +
+            boxLabel;
+          const qrCodeBuffer = await QRCode.toBuffer(file);
+          pdfDoc.image(qrCodeBuffer, 50, 50 + (i - 1) * 150, { width: 100 });
+          pdfDoc.font('Helvetica-Bold').fontSize(12).text(`Details for Item:`, 200, 50 + (i - 1) * 150);
+          const details = [
+            `Part No: ${item.productId.partNo}`,
+            `Part Name: ${item.productId.partName}`,
+            `Lot No: ${item.lotNo}`,
+            `Receipt Date: ${item.date.toDateString()}`,
+            `Supplier Name: ${item.supplierId.supplierName}`,
+            `Bag Qty: ${bagQty}`,
+            `Box: ${boxLabel}`,
+          ];
+          const startY = 70 + (i - 1) * 150;
+          details.forEach((detail, index) => {
+            pdfDoc.font('Helvetica').fontSize(12).text(detail, 200, startY + index * 15);
+          });
+          i++;
+          runningBoxNo++;
+        }
+      } else {
+        // Normal pallet (no split)
+        if (i > 1 && (i - 1) % 5 === 0) {
+          pdfDoc.addPage();
+          i = 1;
+        }
+        const file =
+          item.productId.partNo + ',' +
+          item.productId.partName + ',' +
+          item.lotNo + ',' +
+          item.date.toLocaleDateString() + ',' +
+          item.supplierId.supplierName + ',' +
+          item.quantity;
+        const qrCodeBuffer = await QRCode.toBuffer(file);
+        pdfDoc.image(qrCodeBuffer, 50, 50 + (i - 1) * 150, { width: 100 });
+        pdfDoc.font('Helvetica-Bold').fontSize(12).text(`Details for Item:`, 200, 50 + (i - 1) * 150);
+        const status = item.status === ReceiptItem.INBOUND ? 'Completed' : 'In Progress';
+        const details = [
+          `Part No: ${item.productId.partNo}`,
+          `Part Name: ${item.productId.partName}`,
+          ``,
+          `Lot No: ${item.lotNo}`,
+          `Receipt Date: ${item.date.toDateString()}`,
+          `Supplier Name: ${item.supplierId.supplierName}`,
+          `Quantity: ${item.quantity}`,
+          `Status: ${status}`,
+        ];
+        const startY = 70 + (i - 1) * 150;
+        details.forEach((detail, index) => {
+          pdfDoc.font('Helvetica').fontSize(12).text(detail, 200, startY + index * 15);
+        });
+        i++;
       }
-
-      // const palletData = `${file},${pallets[i - 1]}`;
-      const file =
-        item.productId.partNo +
-        ',' +
-        item.productId.partName +
-        ',' +
-        item.lotNo +
-        ',' +
-        item.date.toLocaleDateString() +
-        ',' +
-        item.supplierId.supplierName +
-        ',' +
-        item.quantity;
-      // Generate QR code and embed it in the PDF
-      const qrCodeBuffer = await QRCode.toBuffer(file);
-
-      // Draw QR code
-      pdfDoc.image(qrCodeBuffer, 50, 50 + (i - 1) * 150, { width: 100 });
-
-      // Draw details
-      pdfDoc
-        .font('Helvetica-Bold')
-        .fontSize(12)
-        .text(`Details for Item:`, 200, 50 + (i - 1) * 150);
-
-      const status =
-        item.status === ReceiptItem.INBOUND ? 'Completed' : 'In Progress';
-      const details = [
-        `Part No: ${item.productId.partNo}`,
-        `Part Name: ${item.productId.partName}`,
-        ``,
-        `Lot No: ${item.lotNo}`,
-        `Receipt Date: ${item.date.toDateString()}`,
-        `Supplier Name: ${item.supplierId.supplierName}`,
-        `Quantity: ${item.quantity}`,
-        `Status: ${status}`,
-      ];
-
-      const startY = 70 + (i - 1) * 150;
-      const lineHeight = 15;
-
-      details.forEach((detail, index) => {
-        pdfDoc
-          .font('Helvetica')
-          .fontSize(12)
-          .text(detail, 200, startY + index * lineHeight);
-      });
-      i++;
     }
 
     // End the PDF stream

@@ -19,6 +19,7 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
   const [qty, setQTY] = useState('')
   const [palletCount, setPalletCount] = useState('')
   const [palletQty, setPalletQTY] = useState([])
+  const [splitpalletcount, setSplitpalletcount] = useState('')
   const [price, setPrice] = useState('')
   const [supplier, setSupplier] = useState('')
   const [partNo, setPartNo] = useState('')
@@ -59,7 +60,8 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
         date: new Date(date).toISOString(),
         price: Number(price),
         receivedBy,
-        quantity: Number(currentValue)
+        quantity: Number(currentValue),
+        splitpalletcount: splitpalletcount ? Number(splitpalletcount) : 0,
       }
       if (loading) return
       setLoading(true)
@@ -366,11 +368,25 @@ useEffect(() => {
 
                 setPalletCount(count);
 
-              
+
               }}
             />
             <label>pallet count</label>
           </div>
+          <div className="input_wrap">
+            <input
+              type="number"
+              min={0}
+              value={splitpalletcount}
+              onChange={(e) => { setSplitpalletcount(e.target.value) }}
+            />
+            <label>{'จำนวนถุง (Split Pallet)'}</label>
+          </div>
+          {splitpalletcount > 0 && qty > 0 && (
+            <p style={{ fontSize: '13px', color: '#5B6A83', marginBottom: '8px' }}>
+              {`Bag QTY = ${(Number(qty) / Number(splitpalletcount)).toFixed(2)} kg/ถุง`}
+            </p>
+          )}
           <div style={{
             maxHeight: '300px',
             overflowY: 'auto',

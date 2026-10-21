@@ -58,6 +58,10 @@ export class CreateRawMaterialDto {
    @IsOptional()
   @IsString()
   grade: string;
+
+  @IsOptional()
+  @IsNumber()
+  splitpalletcount: number;
 }
 
 export class CreateRMReceiptDto {
