@@ -577,7 +577,7 @@ const QRScan = (props) => {
                           <td className="center">
                             {Number(item.quantity || 0) - Number(item.transactionItemSum || 0)}
                           </td>
-                          <td className="center">{item.stockType}</td>
+                          <td className="center">{item.lotNo}</td>
                         </tr>
                       ))}
                     </tbody>

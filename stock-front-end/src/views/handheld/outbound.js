@@ -220,14 +220,15 @@ const QRScanOutbound = (props) => {
   const [inLotQTY, setInLotQTY] = useState(0)
   const [inPickupQTY, setInPickupQTY] = useState(0)
   const [area, setArea] = useState('')
+  const [areaNo, setAreaNo] = useState('')   // ข้อ 3: Area No. ที่ user scan (persistent)
   const [price, setPrice] = useState('')
   const [stockType, setStockType] = useState('')
   const [isAllDone, setIsAllDone] = useState(false)
   const refInput = useRef()
+  const refAreaInput = useRef()  // ข้อ 3
 
-  // ✅ เคลียร์ค่าฟอร์ม (ไม่ยุ่งกับ recNo) + reset isAllDone
+  // ✅ เคลียร์ค่าฟอร์ม (ไม่ยุ่งกับ recNo และ areaNo) + reset isAllDone
   const clearForm = () => {
-    
     setPartNo('')
     setPartName('')
     setLotNo('')
@@ -240,9 +241,46 @@ const QRScanOutbound = (props) => {
     setIsAllDone(false)
   }
 
+  // ข้อ 3: handle scan Area No. (call /api/v1/area to validate)
+  const handleOnHandheldArea = (result) => {
+    if (!result) return
+    if (loading) return
+    setLoading(true)
+    try {
+      const http = httpCommon()
+      http.get('/api/v1/area', { params: { areaNo: result } })
+        .then(response => {
+          setLoading(false)
+          const dataTemp = get(response, 'data.result.items', '')
+          if (dataTemp && dataTemp.length >= 1) {
+            setAreaNo(dataTemp[0].areaNo)
+            if (refInput.current) refInput.current.focus()
+          } else {
+            openModal({
+              type: 'ERROR_SCAN',
+              data: { title: 'Outbound', error: 'ไม่พบ Area No. นี้' }
+            })
+          }
+        })
+        .catch((e) => {
+          setLoading(false)
+          openModal({
+            type: 'ERROR_SCAN',
+            data: { title: 'Outbound', error: get(e, 'response.data.message', 'Area scan error') }
+          })
+        })
+    } catch (err) {
+      setLoading(false)
+      openModal({
+        type: 'ERROR_SCAN',
+        data: { title: 'Outbound', error: err.toString() }
+      })
+    }
+  }
+
   useEffect(() => {
-    if (recNo && refInput.current) {
-      refInput.current.focus()
+    if (recNo && refAreaInput.current) {
+      refAreaInput.current.focus()  // ข้อ 3: focus Area No. scan เมื่อเลือก Pickup
     }
   }, [recNo])
 
@@ -431,7 +469,16 @@ const QRScanOutbound = (props) => {
         //     }
         //   })
 
-          // ไม่ clearForm ตรงนี้ ปล่อยให้ reloadReceipt แล้ว useEffect เป็นตัวเช็ก allDone แทน
+          // ข้อ 3: clear partNo/lotNo/qty แต่ keep areaNo ไว้ → focus กลับ PART NO.
+          setPartNo('')
+          setPartName('')
+          setLotNo('')
+          setQty('')
+          setInLotQTY(0)
+          setInPickupQTY(0)
+          setArea('')
+          setPrice('')
+          setStockType('')
           if (refInput.current) {
             refInput.current.focus()
           }
@@ -481,10 +528,8 @@ const QRScanOutbound = (props) => {
                   onChange={(e) => {
                     const value = e.target.value
                     setRecNo(value)
-
-                    // เปลี่ยน Pickup No. → เคลียร์ฟอร์มก่อน แล้วค่อยดึงข้อมูลใหม่
+                    setAreaNo('')  // ข้อ 3: reset areaNo เมื่อเปลี่ยน Pickup
                     clearForm()
-
                     onFetchQuery('/api/v1/raw-material/receipt2',{
                       variables: {
                         receiptNo: value,
@@ -514,14 +559,34 @@ const QRScanOutbound = (props) => {
                           <tr key={item.id}>
                             <td className='center'>{item.partNo}</td>
                             <td className='center'>{item.quantity-item.transactionItemSum}</td>
-                            <td className='center'>{item.stockType}</td>
+                            <td className='center'>{item.lotNo}</td>
                             <td className='center'>{item.grade}</td>
                           </tr>
                         )
                       })}
                     </tbody>
-                  </table> 
+                  </table>
                 </div>
+              ) : null}
+
+              {/* ข้อ 3: Area No. scan ก่อน PART NO. */}
+              <div className="input_wrap focus">
+                <input
+                  ref={refAreaInput}
+                  type="text"
+                  required
+                  value={areaNo}
+                  onChange={(e) => {
+                    handleOnHandheldArea(e.target.value)
+                  }}
+                  disabled={recNo === ''}
+                />
+                <label>{'Area No.'}</label>
+              </div>
+              {areaNo ? (
+                <p style={{ color: '#2B3D8F', marginBottom: '8px', fontSize: '14px' }}>
+                  {'📍 Area: ' + areaNo}
+                </p>
               ) : null}
 
               <div className="input_wrap focus">
@@ -533,7 +598,7 @@ const QRScanOutbound = (props) => {
                   onChange={(e) => {
                     handleOnHandheld(e.target.value)
                   }}
-                  disabled={recNo === '' ? true : false}
+                  disabled={areaNo === ''}
                 />
                 <label>{'PART NO.'}</label>
               </div>

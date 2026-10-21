@@ -33,6 +33,7 @@ import ReceiptInfoView from 'views/receipt-info'
 import HandheldDetail from 'views/handheld/detail'
 import HandheldQc from 'views/handheld/qc'
 import HandheldFinalcheck from 'views/handheld/finalcheck'
+import HandheldFinalcheckReprint from 'views/handheld/finalcheck-reprint'
 import QcCheckView from 'views/qc-check'
 
 const HomeFallback = signedOutFallback(HomeView, () => <Login />)
@@ -57,6 +58,7 @@ const HandheldMove2Fallback = signedOutFallback(HandheldMove2, () => <Login />)
 const HandheldDetailFallback = signedOutFallback(HandheldDetail, () => <Login />)
 const HandheldQcFallback = signedOutFallback(HandheldQc, () => <Login />)
 const HandheldFinalcheckFallback = signedOutFallback(HandheldFinalcheck, () => <Login />)
+const HandheldFinalcheckReprintFallback = signedOutFallback(HandheldFinalcheckReprint, () => <Login />)
 const QcCheckFallback = signedOutFallback(QcCheckView, () => <Login />)
 
 
@@ -117,6 +119,7 @@ class Routes extends Component {
             <Route key="login" exact path="/login" component={Login} />
             <Route key="qr-handheld" exact path="/handheld/qc" component={HandheldQcFallback} />
             <Route key="qr-handheld" exact path="/handheld/finalcheck" component={HandheldFinalcheckFallback} />
+            <Route key="qr-handheld-finalcheck-reprint" exact path="/handheld/finalcheck-reprint" component={HandheldFinalcheckReprintFallback} />
             <Route key="qc-check" exact path="/qc-check" component={QcCheckFallback} />
             <Route component={HomeFallback} />
           </Switch>

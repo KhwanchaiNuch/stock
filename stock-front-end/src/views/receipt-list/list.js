@@ -589,6 +589,16 @@ const ReceiptListContainer = ({ hide, key, receiptNo, status }) => {
         <div className="menu-bar-footer">
           <div className="container">
             <div className="btn-menu-wrapper">
+              {/* ข้อ 4: Complete button for INBOUND */}
+              <div
+                className={`btn-menu no-bg ${!isAllow || isEmpty(receiptNo) || status !== "NOT_COMPLETE" ? "disabled" : ""}`}
+                onClick={() => {
+                  if (!isAllow || isEmpty(receiptNo) || status !== "NOT_COMPLETE") return;
+                  openModal({ type: "COMPLETE_RECEIPT", data: { receiptNo } });
+                }}
+              >
+                Complete
+              </div>
               <div
                 className={`btn-menu no-bg ${!isAllow ||
                     isEmpty(receiptNo) ||
@@ -613,6 +623,16 @@ const ReceiptListContainer = ({ hide, key, receiptNo, status }) => {
                 }}
               >
                 Delete
+              </div>
+              {/* ข้อ 4: Hide button for INBOUND */}
+              <div
+                className={`btn-menu no-bg ${!isAllow || isEmpty(receiptNo) || status !== "NOT_COMPLETE" ? "disabled" : ""}`}
+                onClick={() => {
+                  if (!isAllow || isEmpty(receiptNo) || status !== "NOT_COMPLETE") return;
+                  openModal({ type: "HIDE_RECEIPT", data: { receiptNo } });
+                }}
+              >
+                Hide
               </div>
               {data &&
                 data.result &&

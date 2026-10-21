@@ -111,6 +111,14 @@ const HomeMBView = (props) => {
                     <div
                         className="btn-menu-home"
                         onClick={() => {
+                            props.history.push('/handheld/finalcheck-reprint')
+                        }}
+                    >
+                        Finalcheck Reprint
+                    </div>
+                    <div
+                        className="btn-menu-home"
+                        onClick={() => {
                             props.history.push('/handheld/inventory')
                         }}
                     >

@@ -906,6 +906,84 @@ export class RawMaterialController {
     pdfDoc.end();
   }
 
+  // ข้อ 4: Reprint QR for a single receipt item by itemId
+  @UseGuards(JwtAuthGuard)
+  @Post('/generate-qr-item')
+  async generateQrSingleItem(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const itemId = req['body']['itemId'];
+    const item = await this.rawMaterialService.generateQRRMInformation(itemId);
+    const pdfDoc = new PDFDocument();
+    res.setHeader('Content-Disposition', 'attachment; filename=qr-reprint.pdf');
+    pdfDoc.pipe(res);
+    const file =
+      item.productId.partNo + ',' + item.productId.partName + ',' +
+      item.lotNo + ',' + item.date.toLocaleDateString() + ',' +
+      item.supplierId.supplierName + ',' + item.quantity;
+    const qrCodeBuffer = await QRCode.toBuffer(file);
+    pdfDoc.image(qrCodeBuffer, 50, 50, { width: 100 });
+    pdfDoc.font('Helvetica-Bold').fontSize(12).text('QR Tag (Reprint):', 200, 50);
+    const details = [
+      `Part No: ${item.productId.partNo}`,
+      `Part Name: ${item.productId.partName}`,
+      `Lot No: ${item.lotNo}`,
+      `Receipt Date: ${item.date.toDateString()}`,
+      `Supplier: ${item.supplierId.supplierName}`,
+      `Quantity: ${item.quantity}`,
+    ];
+    details.forEach((d, i) => {
+      pdfDoc.font('Helvetica').fontSize(12).text(d, 200, 70 + i * 15);
+    });
+    pdfDoc.end();
+  }
+
+  // ข้อ 8: Finalcheck results — OK/NG qty per item
+  @UseGuards(JwtAuthGuard)
+  @Get('/finalcheck-results')
+  async getFinalcheckResults(@Query('receiptNo') receiptNo: string) {
+    const result = await this.rawMaterialService.getFinalcheckResults(receiptNo);
+    return { statusCode: 200, result };
+  }
+
+  // ข้อ 8: Generate QR PDF for NG (Move) items
+  @UseGuards(JwtAuthGuard)
+  @Post('/generate-qr-ng')
+  async generateQrNgItems(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const receiptNo = req['body']['receiptNo'];
+    const ngItems = await this.rawMaterialService.getNgItemsForPrint(receiptNo);
+    const pdfDoc = new PDFDocument();
+    res.setHeader('Content-Disposition', 'attachment; filename=qr-ng.pdf');
+    pdfDoc.pipe(res);
+    let i = 1;
+    for (const item of ngItems) {
+      if (i > 1 && (i - 1) % 5 === 0) { pdfDoc.addPage(); }
+      const posY = 50 + ((i - 1) % 5) * 150;
+      const file =
+        item.partNo + ',' + item.partName + ',' + item.lotNo + ',' +
+        item.date + ',' + item.supplier + ',' + item.ngQty;
+      const qrCodeBuffer = await QRCode.toBuffer(file);
+      pdfDoc.image(qrCodeBuffer, 50, posY, { width: 100 });
+      pdfDoc.font('Helvetica-Bold').fontSize(12).text('NG Tag:', 200, posY);
+      const details2 = [
+        `Part No: ${item.partNo}`,
+        `Part Name: ${item.partName}`,
+        `Lot No: ${item.lotNo}`,
+        `OK Qty: ${item.okQty}`,
+        `NG Qty: ${item.ngQty}`,
+      ];
+      details2.forEach((d, idx) => {
+        pdfDoc.font('Helvetica').fontSize(11).text(d, 200, posY + 18 + idx * 14);
+      });
+      i++;
+    }
+    pdfDoc.end();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Put('/note')
   async update(@Body() updateRawMaterialItemDto: UpdateRawMaterialItemDto) {

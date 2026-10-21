@@ -3125,9 +3125,45 @@ export class RawMaterialService {
     if (isEmpty(receiptItem)) {
       throw new HttpException('Not found product', HttpStatus.BAD_REQUEST);
     }
-    ``;
     // add lot
     return receiptItem;
+  }
+
+  // ข้อ 8: Finalcheck results — คำนวณ OK/NG qty ต่อ item ในแต่ละ pickup
+  async getFinalcheckResults(receiptNo: string) {
+    if (!receiptNo) throw new HttpException('receiptNo required', HttpStatus.BAD_REQUEST);
+    const receipt = await this.rawMaterialRepository.findOne({ where: { receiptNo } });
+    if (!receipt) throw new HttpException('Receipt not found', HttpStatus.BAD_REQUEST);
+    const items = await this.rawMaterialItemRepository.find({
+      relations: ['productId', 'supplierId'],
+      where: { receiptNo: { receiptNo } },
+    });
+    const output = await Promise.all(items.map(async (item) => {
+      const okQty = await this.transactionRepository.sum('quantity', {
+        itemId: item.id,
+        status: TransactionStatus.OUTBOUND,
+      }) ?? 0;
+      const ngQty = Math.max(0, item.quantity - okQty);
+      return {
+        id: item.id,
+        partNo: item.productId?.partNo,
+        partName: item.productId?.partName,
+        lotNo: item.lotNo,
+        date: item.date,
+        supplier: item.supplierId?.supplierName,
+        totalQty: item.quantity,
+        okQty,
+        ngQty,
+        status: item.status,
+      };
+    }));
+    return { receipt, items: output };
+  }
+
+  // ข้อ 8: NG items สำหรับ print PDF
+  async getNgItemsForPrint(receiptNo: string) {
+    const { items } = await this.getFinalcheckResults(receiptNo);
+    return items.filter(item => item.ngQty > 0);
   }
 
   async generateReceiptByReceiptNo(receiptNo: string) {
