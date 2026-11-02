@@ -618,7 +618,7 @@ const QRScanOutbound = (props) => {
                 <input
                   type="number"
                   required
-                  defaultValue={qty}
+                  value={qty}
                   onChange={(e) => {
                     const newValue = e.target.value.replace(/[^0-9]/g, '');
                     const limitedValue = Math.min(

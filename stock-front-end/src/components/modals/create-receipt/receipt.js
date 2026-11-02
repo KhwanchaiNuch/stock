@@ -8,7 +8,8 @@ import useGet from 'hooks/useGet'
 import usePost from 'hooks/usePost'
 import { get, map, find, isEmpty } from 'lodash'
 import delay from 'utils/delay'
-import AsyncSelect from 'react-select/async';
+import AsyncSelect from 'react-select/async'
+import { httpCommon } from 'connectors/http-common'
 
 
 const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
@@ -44,66 +45,91 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
   const { onPost } = usePost('/api/v1/raw-material/receipt-item')
   const { onPost: opPostRecipt } = usePost('/api/v1/raw-material/receipt/inbound')
 
-  const onCreateReceiptItem = () => {
-    for (let i = 0; i < palletQty.length; i++) {
-      const currentValue = palletQty[i];
-      // Perform your action using currentValue
-      console.log(`Processing pallet ${i+1}: ${currentValue}`);
-      const num = i+1
-      const variables = {
-        receiptNo,
-        partNo,
-        supplier,
-        stockType,
-        invoiceNo: invoiceNo? invoiceNo+'_'+num:invoiceTemp+'_'+num,
-        lotNo: lotNo ? lotNo+'_'+num: lotTemp+'_'+num,
-        date: new Date(date).toISOString(),
-        price: Number(price),
-        receivedBy,
-        quantity: Number(currentValue),
-        splitpalletcount: splitpalletcount ? Number(splitpalletcount) : 0,
-      }
-      if (loading) return
-      setLoading(true)
-      onPost({
-        variables,
-        onDone: async (res) => {
-          if (get(res, 'statusCode', '') === 200) {
-            setLoading(false)
-            closeModal()
-            showNotification({
-              props: {
-                type: 'success',
-                title: 'Create new receipt successfully',
-                notAutoClose: false,
-                hasCloseBtn: false
-              }
-            })
-            await delay(1500)
-            location.reload()
-          } else {
-            setLoading(false)
-            showNotification({
-              props: {
-                type: 'error',
-                title: get(res, 'error', ''),
-                notAutoClose: true,
-                hasCloseBtn: true
-              }
-            })
-          }
-        },
-        onError: (e) => {
-          console.log('onError ==>', e)
-          setLoading(false)
-          showNotification({
-            props: {
-              type: 'error',
-              title: get(e, 'response.data.message', ''),
-              notAutoClose: true,
-              hasCloseBtn: true
-            }
+  const onCreateReceiptItem = async () => {
+    if (loading) return
+    setLoading(true)
+
+    const splitCount = splitpalletcount ? Number(splitpalletcount) : 0
+    const baseLot = lotNo || lotTemp
+    const baseInvoice = invoiceNo || invoiceTemp
+    const http = httpCommon()
+
+    // สร้าง list ของทุก item ที่ต้องสร้าง
+    const items = []
+
+    if (splitCount > 0) {
+      // ข้อ 2: Split Pallet → สร้าง box ย่อยต่อ pallet
+      // Box1-1, Box2-1...Box{n}-1, Box{n+1}-2...Box{2n}-2
+      let globalBoxIdx = 1
+      const totalPallets = Number(palletCount)
+      for (let p = 0; p < totalPallets; p++) {
+        const palletNum = p + 1
+        for (let b = 0; b < splitCount; b++) {
+          const boxNum = globalBoxIdx++
+          items.push({
+            receiptNo,
+            partNo,
+            supplier,
+            stockType,
+            invoiceNo: `${baseInvoice}_Box${boxNum}-${palletNum}`,
+            lotNo: `${baseLot}_Box${boxNum}-${palletNum}`,
+            date: new Date(date).toISOString(),
+            price: Number(price),
+            receivedBy,
+            quantity: Number(qty),   // qty per bag
+            splitpalletcount: splitCount,
           })
+        }
+      }
+    } else {
+      // Normal mode: 1 item per pallet
+      for (let i = 0; i < palletQty.length; i++) {
+        const num = i + 1
+        items.push({
+          receiptNo,
+          partNo,
+          supplier,
+          stockType,
+          invoiceNo: `${baseInvoice}_${num}`,
+          lotNo: `${baseLot}_${num}`,
+          date: new Date(date).toISOString(),
+          price: Number(price),
+          receivedBy,
+          quantity: Number(palletQty[i]),
+          splitpalletcount: 0,
+        })
+      }
+    }
+
+    // Post ทีละ item แบบ sequential
+    try {
+      for (const variables of items) {
+        const res = await http.post('/api/v1/raw-material/receipt-item', variables)
+        if (get(res, 'data.statusCode', '') !== 200) {
+          throw new Error(get(res, 'data.error', 'Create receipt item failed'))
+        }
+      }
+      setLoading(false)
+      closeModal()
+      showNotification({
+        props: {
+          type: 'success',
+          title: `สร้างสำเร็จ ${items.length} รายการ`,
+          notAutoClose: false,
+          hasCloseBtn: false
+        }
+      })
+      await delay(1500)
+      location.reload()
+    } catch (e) {
+      console.log('onError ==>', e)
+      setLoading(false)
+      showNotification({
+        props: {
+          type: 'error',
+          title: e.message || get(e, 'response.data.message', 'Error'),
+          notAutoClose: true,
+          hasCloseBtn: true
         }
       })
     }
@@ -235,33 +261,36 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
 
   const renderInputBoxes = () => {
     if (isNaN(palletCount) || palletCount <= 0) {
-      return null;
+      return null
     }
+    const splitCount = splitpalletcount ? Number(splitpalletcount) : 0
     return Array.from({ length: palletCount }, (_, index) => (
-      <div className="input_wrap">
+      <div className="input_wrap" key={index}>
         <input
-          key={index}
           type="number"
           required
-          value={palletQty[index]}
+          value={palletQty[index] || ''}
+          disabled={splitCount > 0} // ข้อ 2: auto-calc เมื่อมี split pallet
           onChange={(e) => handlePalletQtyChange(index, +e.target.value)}
         />
-        <label>{`Pallet Qty ${index+1}`}</label>
+        <label>{`Pallet Qty ${index+1}`}{splitCount > 0 ? ` (= ${splitCount} × ${qty})` : ''}</label>
       </div>
     ))
-  };
+  }
 
 
 useEffect(() => {
   if (palletCount > 0 && qty) {
+    const splitCount = splitpalletcount ? Number(splitpalletcount) : 0
+    // Pallet QTY = จำนวนถุง * QTY (ข้อ 2: calculate by program)
+    const totalPerPallet = splitCount > 0 ? splitCount * Number(qty) : Number(qty)
     const newPalletQty = Array.from(
       { length: Number(palletCount) },
-      () => Number(qty) || 0
-    );
-
-    setPalletQTY(newPalletQty);
+      () => totalPerPallet
+    )
+    setPalletQTY(newPalletQty)
   }
-}, [qty, palletCount]);
+}, [qty, palletCount, splitpalletcount])
 
   return (
     <Modal
@@ -349,7 +378,7 @@ useEffect(() => {
               value={qty}
               onChange={(e) => { setQTY(Number(e.target.value)) }}
             />
-            <label>{'QTY per Pallet*'}</label>
+            <label>{splitpalletcount > 0 ? 'QTY per Bag*' : 'QTY per Pallet*'}</label>
           </div>
           <div className="select_wrap">
             <input
@@ -382,10 +411,16 @@ useEffect(() => {
             />
             <label>{'จำนวนถุง (Split Pallet)'}</label>
           </div>
-          {splitpalletcount > 0 && qty > 0 && (
-            <p style={{ fontSize: '13px', color: '#5B6A83', marginBottom: '8px' }}>
-              {`Bag QTY = ${(Number(qty) / Number(splitpalletcount)).toFixed(2)} kg/ถุง`}
-            </p>
+          {splitpalletcount > 0 && qty > 0 && palletCount > 0 && (
+            <div style={{ fontSize: '13px', color: '#2B3D8F', marginBottom: '8px', background: '#F0F4FF', padding: '8px', borderRadius: '8px' }}>
+              <p style={{ fontWeight: 700, marginBottom: '4px' }}>
+                {`Pallet QTY = ${splitpalletcount} ถุง × ${qty} = ${Number(splitpalletcount) * Number(qty)} ต่อ pallet`}
+              </p>
+              <p style={{ color: '#5B6A83' }}>
+                {`Box1-1 … Box${splitpalletcount}-1`}
+                {palletCount > 1 ? ` | Box${Number(splitpalletcount)+1}-2 … Box${Number(splitpalletcount)*Number(palletCount)}-${palletCount}` : ''}
+              </p>
+            </div>
           )}
           <div style={{
             maxHeight: '300px',

@@ -271,8 +271,8 @@ const QRScan = (props) => {
   const [area, setArea] = useState('')
   const [areas, setAreas] = useState('')
 
-  const refInput = useRef(null)   // Part No.
-  const refInput3 = useRef(null)  // Area No.
+  const refInput = useRef(null)    // Part No.
+  const refAreaInput = useRef(null) // Area No. (ข้อ 3: scan ก่อน Part No.)
 
   // 🔹 ใช้ดึง list Pickup + detail เหมือน Outbound
   const { data: recList } = useGet('/api/v1/raw-material/receipt/inbound')
@@ -323,12 +323,19 @@ const [isAllDone, setIsAllDone] = useState(false)
 }, [temp])
 
 
-  // ⬇️ แก้ให้โฟกัส Part No. เฉพาะตอนที่ recNo มีค่าแล้ว
+  // ข้อ 3: เมื่อเลือก Pickup → focus Area No. (scan Area ก่อน)
   useEffect(() => {
-    if (recNo && refInput.current) {
-      refInput.current.focus()
+    if (recNo && refAreaInput.current) {
+      refAreaInput.current.focus()
     }
   }, [recNo])
+
+  // ข้อ 3: เมื่อ Area set แล้ว → focus Part No.
+  useEffect(() => {
+    if (area && refInput.current) {
+      refInput.current.focus()
+    }
+  }, [area])
 
   const handleOnHandheld = (result) => {
     if (result) {
@@ -395,9 +402,7 @@ const [isAllDone, setIsAllDone] = useState(false)
                 setQty(quantity)
                 setAreas(get(response, 'data.result.area', []))
                 setPartName(partNameValue)
-                if (refInput3.current) {
-                  refInput3.current.focus()
-                }
+                // ข้อ 3: ไม่ต้อง focus Area อีกต่อไป เพราะ Area scan ไปแล้ว
               } else {
                 setLoading(false)
                 openModal({
@@ -557,9 +562,14 @@ const [isAllDone, setIsAllDone] = useState(false)
           setPartName('')
           setLotNo('')
           setQty('')
-          setArea('')
+          // ข้อ 3: ไม่ clear Area หลัง Confirm → scan Part No. ต่อได้เลย
+          // setArea('')
 
           reloadReceipt(recNo)
+          // focus กลับ Part No.
+          setTimeout(() => {
+            if (refInput.current) refInput.current.focus()
+          }, 300)
           //location.reload()
         } else {
           setLoading(false)
@@ -645,7 +655,7 @@ const [isAllDone, setIsAllDone] = useState(false)
                           <td className="center">
                             {item.quantity - item.transactionItemSum}
                           </td>
-                          <td className="center">{item.stockType}</td>
+                          <td className="center">{item.lotNo}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -653,14 +663,34 @@ const [isAllDone, setIsAllDone] = useState(false)
                 </div>
               ) : null}
 
-              {/* 🔹 ส่วน scan เดิม แต่ disable Part No. ถ้ายังไม่เลือก Pickup */}
+              {/* ข้อ 3: Area No. scan ก่อน Part No. */}
+              <div className="input_wrap focus">
+                <input
+                  ref={refAreaInput}
+                  type="text"
+                  required
+                  value={area}
+                  disabled={recNo === ''}
+                  onChange={(e) => {
+                    handleOnHandheldArea(e.target.value)
+                  }}
+                />
+                <label>{'Area No.'}</label>
+              </div>
+              {area ? (
+                <p style={{ color: '#2B3D8F', marginBottom: '8px', fontSize: '14px' }}>
+                  {'📍 Area: ' + area}
+                </p>
+              ) : null}
+
+              {/* Part No. scan หลัง Area */}
               <div className="input_wrap focus">
                 <input
                   ref={refInput}
                   type="text"
                   required
                   value={partNo}
-                  disabled={recNo === ''}   // ⬅️ มาถึงครั้งแรก recNo = '' ⇒ disable
+                  disabled={recNo === '' || area === ''}
                   onChange={(e) => {
                     handleOnHandheld(e.target.value)
                   }}
@@ -669,29 +699,12 @@ const [isAllDone, setIsAllDone] = useState(false)
               </div>
               <div className="input_wrap focus">
                 <input type="text" required value={lotNo} disabled />
-                <label>{'Lot No.'}</label>
+                <label>{'LOT NO.'}</label>
               </div>
               <h3>{partName}</h3>
               <div className="input_wrap focus">
-                <input type="text" required value={lotNo} disabled />
-                <label>{'LOT NO.'}</label>
-              </div>
-              <div className="input_wrap focus">
                 <input type="text" required value={qty} disabled />
                 <label>{'QTY'}</label>
-              </div>
-              <div className="input_wrap focus">
-                <input
-                  ref={refInput3}
-                  type="text"
-                  required
-                  value={area}
-                  disabled={partNo === ''}
-                  onChange={(e) => {
-                    handleOnHandheldArea(e.target.value)
-                  }}
-                />
-                <label>{'Area No.'}</label>
               </div>
               <div className="button-wrapper">
                 <div
