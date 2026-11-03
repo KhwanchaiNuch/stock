@@ -15,6 +15,7 @@ const Header = (props) => {
     const isActiveInventory = ['/inventory'].includes(get(props, 'history.location.pathname', ''))
     const isActiveHistory= ['/history'].includes(get(props, 'history.location.pathname', ''))
     const isActiveQCCheck= ['/qc-check'].includes(get(props, 'history.location.pathname', ''))
+    const isActiveFinalcheckReprint= ['/finalcheck-reprint'].includes(get(props, 'history.location.pathname', ''))
 
     
     const isActiveHandheld = ['/handheld', '/handheld/rm/inbound', '/handheld/fg/inbound', '/handheld/rm/outbound', '/handheld/fg/outbound',
@@ -52,6 +53,9 @@ const Header = (props) => {
                     </div>
                       <div className={`menu-item ${isActiveQCCheck ? 'is-active' : ''}`} onClick={() => { props.history.push('/qc-check') }}>
                         QC Check
+                    </div>
+                    <div className={`menu-item ${isActiveFinalcheckReprint ? 'is-active' : ''}`} onClick={() => { props.history.push('/finalcheck-reprint') }}>
+                        Finalcheck Reprint
                     </div>
                 </div>
                 <div className="user-menu">

@@ -119,7 +119,7 @@ class Routes extends Component {
             <Route key="login" exact path="/login" component={Login} />
             <Route key="qr-handheld" exact path="/handheld/qc" component={HandheldQcFallback} />
             <Route key="qr-handheld" exact path="/handheld/finalcheck" component={HandheldFinalcheckFallback} />
-            <Route key="qr-handheld-finalcheck-reprint" exact path="/handheld/finalcheck-reprint" component={HandheldFinalcheckReprintFallback} />
+            <Route key="finalcheck-reprint" exact path="/finalcheck-reprint" component={HandheldFinalcheckReprintFallback} />
             <Route key="qc-check" exact path="/qc-check" component={QcCheckFallback} />
             <Route component={HomeFallback} />
           </Switch>

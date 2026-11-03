@@ -77,7 +77,7 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
             price: Number(price),
             receivedBy,
             quantity: Number(qty),   // qty per bag
-            splitpalletcount: splitCount,
+            splitpalletcount: 0,     // แต่ละ item คือ 1 box แล้ว ไม่ต้อง split เพิ่ม
           })
         }
       }
@@ -265,7 +265,7 @@ const CreateReceipt = ({ firstItems = false, receiptNo = '', stockType}) => {
     }
     const splitCount = splitpalletcount ? Number(splitpalletcount) : 0
     return Array.from({ length: palletCount }, (_, index) => (
-      <div className="input_wrap" key={index}>
+      <div className="input_wrap focus" key={index}>
         <input
           type="number"
           required
@@ -411,17 +411,6 @@ useEffect(() => {
             />
             <label>{'จำนวนถุง (Split Pallet)'}</label>
           </div>
-          {splitpalletcount > 0 && qty > 0 && palletCount > 0 && (
-            <div style={{ fontSize: '13px', color: '#2B3D8F', marginBottom: '8px', background: '#F0F4FF', padding: '8px', borderRadius: '8px' }}>
-              <p style={{ fontWeight: 700, marginBottom: '4px' }}>
-                {`Pallet QTY = ${splitpalletcount} ถุง × ${qty} = ${Number(splitpalletcount) * Number(qty)} ต่อ pallet`}
-              </p>
-              <p style={{ color: '#5B6A83' }}>
-                {`Box1-1 … Box${splitpalletcount}-1`}
-                {palletCount > 1 ? ` | Box${Number(splitpalletcount)+1}-2 … Box${Number(splitpalletcount)*Number(palletCount)}-${palletCount}` : ''}
-              </p>
-            </div>
-          )}
           <div style={{
             maxHeight: '300px',
             overflowY: 'auto',
