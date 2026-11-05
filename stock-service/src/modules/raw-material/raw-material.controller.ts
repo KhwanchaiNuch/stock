@@ -855,7 +855,7 @@ export class RawMaterialController {
         // Split pallet: generate splitCount QR codes for this item
         const bagQty = Math.round((item.quantity / splitCount) * 100) / 100;
         for (let b = 0; b < splitCount; b++) {
-          if (i > 1 && (i - 1) % 5 === 0) {
+          if (i > 1 && (i - 1) % 4 === 0) {
             pdfDoc.addPage();
             i = 1;
           }
@@ -889,7 +889,7 @@ export class RawMaterialController {
         }
       } else {
         // Normal pallet (no split)
-        if (i > 1 && (i - 1) % 5 === 0) {
+        if (i > 1 && (i - 1) % 4 === 0) {
           pdfDoc.addPage();
           i = 1;
         }
@@ -981,7 +981,7 @@ export class RawMaterialController {
     pdfDoc.pipe(res);
     let i = 1;
     for (const item of ngItems) {
-      if (i > 1 && (i - 1) % 5 === 0) { pdfDoc.addPage(); }
+      if (i > 1 && (i - 1) % 4 === 0) { pdfDoc.addPage(); }
       const posY = 50 + ((i - 1) % 5) * 150;
       const file =
         item.partNo + ',' + item.partName + ',' + item.lotNo + ',' +
