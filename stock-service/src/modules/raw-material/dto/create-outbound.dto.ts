@@ -14,7 +14,7 @@ export class CreateOutboundDto {
   @IsString()
   lotNo: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   area: string;
 
