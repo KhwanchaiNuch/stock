@@ -570,16 +570,14 @@ export class RawMaterialService {
       where: {
         receiptNo,
         status: RawMaterialReceiptStatus.NOT_COMPLETE,
-        //stockType,
-
       },
     });
-
-    let stockType = receipt.stockType;
 
     if (isEmpty(receipt)) {
       throw new HttpException('Data not match', HttpStatus.BAD_REQUEST);
     }
+
+    let stockType = receipt.stockType;
 
     if (receipt.status === RawMaterialReceiptStatus.COMPLETE) {
       throw new HttpException(
@@ -717,12 +715,8 @@ export class RawMaterialService {
       where: {
         receiptNo,
         status: RawMaterialReceiptStatus.NOT_COMPLETE,
-        //stockType,
-
       },
     });
-
-    let stockType = receipt.stockType;
 
     if (isEmpty(receipt)) {
       throw new HttpException('Data not match', HttpStatus.BAD_REQUEST);
@@ -734,6 +728,8 @@ export class RawMaterialService {
         HttpStatus.BAD_REQUEST,
       );
     }
+
+    let stockType = receipt.stockType;
 
     const receiptItem = await this.rawMaterialItemRepository.findOne({
       relations: ['receiptNo', 'productId', 'area'],
@@ -803,7 +799,7 @@ export class RawMaterialService {
       {
         receipt: receipt.id,
         itemId: receiptItem.id,
-        price: receiptItem.price,
+        status: TransactionStatus.HOLD,
       },
       {
         status: TransactionStatus.INBOUND,
@@ -811,7 +807,6 @@ export class RawMaterialService {
         checkStatus: checkStatus,
         grade: grade,
         note: note,
-
       },
     );
     // กันกรณีไม่มี transaction ให้ update
@@ -830,6 +825,7 @@ export class RawMaterialService {
       receiptItem.status = ReceiptItem.INBOUND;
       receiptItem.area = dbArea;
       receiptItem.checkStatus = checkStatus;
+      if (grade) receiptItem.grade = grade;
 
       await this.rawMaterialItemRepository.save(receiptItem);
     }

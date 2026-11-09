@@ -982,7 +982,7 @@ export class RawMaterialController {
     let i = 1;
     for (const item of ngItems) {
       if (i > 1 && (i - 1) % 4 === 0) { pdfDoc.addPage(); }
-      const posY = 50 + ((i - 1) % 5) * 150;
+      const posY = 50 + ((i - 1) % 4) * 150;
       const file =
         item.partNo + ',' + item.partName + ',' + item.lotNo + ',' +
         item.date + ',' + item.supplier + ',' + item.ngQty;
