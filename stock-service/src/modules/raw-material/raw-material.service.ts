@@ -569,7 +569,7 @@ export class RawMaterialService {
     const receipt = await this.rawMaterialRepository.findOne({
       where: {
         receiptNo,
-        status: RawMaterialReceiptStatus.NOT_COMPLETE,
+       // status: RawMaterialReceiptStatus.NOT_COMPLETE,
       },
     });
 
