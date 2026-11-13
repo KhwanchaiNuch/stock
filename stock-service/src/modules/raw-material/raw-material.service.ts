@@ -569,7 +569,7 @@ export class RawMaterialService {
     const receipt = await this.rawMaterialRepository.findOne({
       where: {
         receiptNo,
-       // status: RawMaterialReceiptStatus.NOT_COMPLETE,
+        status: RawMaterialReceiptStatus.NOT_COMPLETE,
       },
     });
 
@@ -714,7 +714,7 @@ export class RawMaterialService {
     const receipt = await this.rawMaterialRepository.findOne({
       where: {
         receiptNo,
-        status: RawMaterialReceiptStatus.NOT_COMPLETE,
+        // status: RawMaterialReceiptStatus.NOT_COMPLETE,  // comment: QC approve ทำได้แม้ receipt COMPLETE แล้ว
       },
     });
 
@@ -722,12 +722,9 @@ export class RawMaterialService {
       throw new HttpException('Data not match', HttpStatus.BAD_REQUEST);
     }
 
-    if (receipt.status === RawMaterialReceiptStatus.COMPLETE) {
-      throw new HttpException(
-        'All receipt item has scanned already',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    // if (receipt.status === RawMaterialReceiptStatus.COMPLETE) {
+    //   throw new HttpException('All receipt item has scanned already', HttpStatus.BAD_REQUEST);
+    // }
 
     let stockType = receipt.stockType;
 
@@ -735,7 +732,7 @@ export class RawMaterialService {
       relations: ['receiptNo', 'productId', 'area'],
       where: {
         lotNo,
-        status: ReceiptItem.WAITING,
+        // status: ReceiptItem.WAITING,  // comment: QC approve ทำได้แม้ item ผ่าน INBOUND แล้ว
         receiptNo: {
           receiptNo,
         },
@@ -751,14 +748,7 @@ export class RawMaterialService {
       throw new HttpException('Not found receipt item', HttpStatus.BAD_REQUEST);
     }
 
-    // const areaOption: FindOneOptions<AreaEntity> = {
-    //   where: {
-    //     areaNo: area,
-    //     typeOfStock: stockType,
-    //   },
-    // };
     console.log('receiptItem.area -> ', receiptItem);
-    // const dbArea = await this.areaService.findOneByOption(areaOption);
     const dbArea = receiptItem.area;
 
     if (isEmpty(dbArea)) {
