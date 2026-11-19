@@ -126,6 +126,32 @@ const FinalcheckReprintView = (props) => {
     openModal({ type: 'EDIT_QC_STATUS', data: { mode: 'selected', ids: selected } })
   }
 
+  const [loadingDelete, setLoadingDelete] = useState(false)
+
+  const handleDelete = async () => {
+    if (selected.length === 0 || loadingDelete) return
+    if (!window.confirm(`ลบ ${selected.length} รายการที่เลือก?`)) return
+    setLoadingDelete(true)
+    try {
+      const http = httpCommon()
+      for (const id of selected) {
+        await http.delete(`/api/v1/transactions/${id}`)
+      }
+      setSelected([])
+      showNotification({
+        props: { type: 'success', title: 'ลบสำเร็จ', notAutoClose: false, hasCloseBtn: false }
+      })
+      const filter = buildFilter()
+      onFetchQuery('/api/v1/transactions', { variables: { limit, offset, ...filter } })
+    } catch (e) {
+      showNotification({
+        props: { type: 'error', title: get(e, 'response.data.message', 'Delete error'), notAutoClose: true, hasCloseBtn: true }
+      })
+    } finally {
+      setLoadingDelete(false)
+    }
+  }
+
   return (
     <AppViewWrapperPure page="content">
       <main className="container-receipt">
@@ -258,6 +284,15 @@ const FinalcheckReprintView = (props) => {
                   >
                     <img src={selected.length === 0 ? IcoEditGray : IcoEditBlue} alt="edit" />
                     Edit
+                  </div>
+
+                  {/* DELETE SELECTED */}
+                  <div
+                    className={`btn-menu no-bg ${selected.length === 0 || loadingDelete ? 'disabled' : ''}`}
+                    onClick={handleDelete}
+                    style={{ color: selected.length > 0 ? '#E53E3E' : undefined }}
+                  >
+                    {loadingDelete ? '...' : 'Delete'}
                   </div>
                 </div>
               </div>
